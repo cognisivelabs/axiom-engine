@@ -1,0 +1,14 @@
+// List Test
+
+// Basic List
+let numbers: int[] = [1, 2, 3];
+// List Logic
+let has_two: bool = 2 in numbers;
+let has_five: bool = 5 in numbers;
+
+// List Literal Usage
+let is_valid: bool = "admin" in ["user", "guest", "admin"];
+
+is_valid
+
+

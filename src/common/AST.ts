@@ -1,9 +1,14 @@
 
-export type Type = 'int' | 'string' | 'bool' | ObjectType;
+export type Type = 'int' | 'string' | 'bool' | ObjectType | ListType;
 
 export interface ObjectType {
     kind: 'object';
     properties: Record<string, Type>;
+}
+
+export interface ListType {
+    kind: 'list';
+    elementType: Type;
 }
 
 export type Statement =
@@ -17,6 +22,7 @@ export type Expression =
     | BinaryExpr
     | UnaryExpr
     | MemberExpr
+    | ListExpr
     | LiteralExpr
     | VariableExpr;
 
@@ -73,6 +79,11 @@ export interface MemberExpr {
     kind: 'Member';
     object: Expression;
     property: string;
+}
+
+export interface ListExpr {
+    kind: 'List';
+    elements: Expression[];
 }
 
 export interface LiteralExpr {

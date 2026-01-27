@@ -46,6 +46,11 @@ export enum TokenType {
     COMMA,
     DOT,
 
+    // List Support
+    LBRACKET,
+    RBRACKET,
+    IN,
+
     // End of File
     EOF
 }
