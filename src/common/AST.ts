@@ -1,5 +1,10 @@
 
-export type Type = 'int' | 'string' | 'bool';
+export type Type = 'int' | 'string' | 'bool' | ObjectType;
+
+export interface ObjectType {
+    kind: 'object';
+    properties: Record<string, Type>;
+}
 
 export type Statement =
     | VarDecl
@@ -11,6 +16,7 @@ export type Statement =
 export type Expression =
     | BinaryExpr
     | UnaryExpr
+    | MemberExpr
     | LiteralExpr
     | VariableExpr;
 
@@ -63,8 +69,15 @@ export interface UnaryExpr {
     right: Expression;
 }
 
+export interface MemberExpr {
+    kind: 'Member';
+    object: Expression;
+    property: string;
+}
+
 export interface LiteralExpr {
     kind: 'Literal';
+
     value: any;
     type: Type; // 'int' | 'string' | 'bool'
 }

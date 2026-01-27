@@ -196,10 +196,26 @@ export class Parser {
             return { kind: 'Unary', operator, right };
         }
 
-        return this.primary();
+        return this.call();
+    }
+
+    private call(): Expression {
+        let expr = this.primary();
+
+        while (true) {
+            if (this.match(TokenType.DOT)) {
+                const name = this.consume(TokenType.IDENTIFIER, "Expect property name after '.'.").value;
+                expr = { kind: 'Member', object: expr, property: name };
+            } else {
+                break;
+            }
+        }
+
+        return expr;
     }
 
     private primary(): Expression {
+
         if (this.match(TokenType.FALSE)) return { kind: 'Literal', value: false, type: 'bool' };
         if (this.match(TokenType.TRUE)) return { kind: 'Literal', value: true, type: 'bool' };
 

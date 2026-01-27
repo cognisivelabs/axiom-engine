@@ -43,7 +43,10 @@ export enum TokenType {
     RPAREN,
     LBRACE,
     RBRACE,
+    COMMA,
+    DOT,
 
+    // End of File
     EOF
 }
 

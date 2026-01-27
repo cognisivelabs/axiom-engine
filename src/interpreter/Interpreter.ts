@@ -79,9 +79,24 @@ export class Interpreter {
                 return this.evaluateBinary(expr as BinaryExpr);
             case 'Unary':
                 return this.evaluateUnary(expr as UnaryExpr);
+            case 'Member':
+                return this.evaluateMember(expr as any);
             default:
                 throw new Error(`Unknown expression kind: ${expr}`);
         }
+    }
+
+    private evaluateMember(expr: { object: Expression, property: string }): any {
+        const object = this.evaluate(expr.object);
+        if (typeof object !== 'object' || object === null) {
+            throw new Error(`Only objects have properties. Got ${object}`);
+        }
+        if (!(expr.property in object)) {
+            // In a strict language, we might error. In JS hosts, it might be undefined.
+            // Let's error to be safe.
+            throw new Error(`Property '${expr.property}' does not exist on object.`);
+        }
+        return object[expr.property];
     }
 
     private evaluateUnary(expr: UnaryExpr): any {

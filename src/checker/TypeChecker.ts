@@ -96,10 +96,25 @@ export class TypeChecker {
                 const type = this.variables.get(expr.name);
                 if (!type) throw new Error(`Undefined variable '${expr.name}'`);
                 return type;
+            case 'Member':
+                return this.checkMember(expr as any);
             default:
                 const unreachable: never = expr;
                 throw new Error(`Unknown expression kind: ${(expr as any).kind}`);
         }
+    }
+
+    private checkMember(expr: { object: Expression, property: string }): Type {
+        const objectType = this.checkExpression(expr.object);
+        if (typeof objectType === 'string' || objectType.kind !== 'object') {
+            throw new Error(`Only objects have properties. Got ${JSON.stringify(objectType)}`);
+        }
+
+        const propertyType = objectType.properties[expr.property];
+        if (!propertyType) {
+            throw new Error(`Property '${expr.property}' does not exist on object.`);
+        }
+        return propertyType;
     }
 
     private checkUnary(expr: UnaryExpr): Type {

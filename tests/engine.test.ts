@@ -40,7 +40,56 @@ describe('Axiom Engine Integration Tests', () => {
         assert.strictEqual(resultRegular, 100, 'Regular User should pay full price');
     });
 
+    it('should verify Member Access (Dot Notation)', () => {
+        const source = readRule('member_access.ax');
+        const contextTypes: any = {
+            'user': {
+                kind: 'object',
+                properties: {
+                    'name': 'string',
+                    'address': {
+                        kind: 'object',
+                        properties: {
+                            'city': 'string'
+                        }
+                    }
+                }
+            }
+        };
+
+        const contextData = {
+            'user': {
+                'name': 'Alice',
+                'address': {
+                    'city': 'Wonderland'
+                }
+            }
+        };
+
+        const ast = Axiom.compile(source);
+        Axiom.check(ast, contextTypes);
+        const result = Axiom.execute(ast, contextData);
+
+        assert.strictEqual(result, 'Wonderland', 'Should access nested property');
+    });
+
+    it('should throw error on invalid property access', () => {
+        const source = `let x: string = user.unknown_prop;`;
+        const contextTypes: any = {
+            'user': { kind: 'object', properties: { 'name': 'string' } }
+        };
+
+        try {
+            const ast = Axiom.compile(source);
+            Axiom.check(ast, contextTypes);
+            assert.fail('Should fail type check');
+        } catch (e: any) {
+            assert.match(e.message, /Property 'unknown_prop' does not exist/);
+        }
+    });
+
     it('should verify Math operations and Precedence', () => {
+
         const source = readRule('math.ax');
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});

@@ -56,9 +56,19 @@ final_price; // The script returns 100
 | `>`, `<`, `>=`, `<=` | `int` | `bool` |
 | `&&`, `||` | `bool` | `bool` |
 | `!` (Unary) | `bool` | `bool` |
+| `.` (Member Access) | `object` | `any` |
 
 ## Context (Input Variables)
-Variables passed from the Host Application are available globally. You do not need to declare them; they are injected.
+Variables passed from the Host Application are available globally. 
+Context can contain **nested objects**. Access them using **Dot Notation**.
+
+```typescript
+// Context: { user: { name: 'Alice', address: { city: 'Wonderland' } } }
+
+if (user.address.city == "Wonderland") {
+    // ...
+}
+```
 
 **Example**:
 If host passes `{ user_age: 25 }`, you can just use:

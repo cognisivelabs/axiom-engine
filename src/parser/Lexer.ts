@@ -116,6 +116,13 @@ export class Lexer {
                 case ')': tokens.push(this.singleChar(TokenType.RPAREN, ')')); break;
                 case '{': tokens.push(this.singleChar(TokenType.LBRACE, '{')); break;
                 case '}': tokens.push(this.singleChar(TokenType.RBRACE, '}')); break;
+                case '.': tokens.push(this.singleChar(TokenType.DOT, '.')); break;
+                case ';': tokens.push(this.singleChar(TokenType.SEMICOLON, ';')); break;
+                case ':': tokens.push(this.singleChar(TokenType.COLON, ':')); break;
+                case '(': tokens.push(this.singleChar(TokenType.LPAREN, '(')); break;
+                case ')': tokens.push(this.singleChar(TokenType.RPAREN, ')')); break;
+                case '{': tokens.push(this.singleChar(TokenType.LBRACE, '{')); break;
+                case '}': tokens.push(this.singleChar(TokenType.RBRACE, '}')); break;
                 default:
                     throw new Error(`Unknown character '${char}' at line ${this.line}`);
             }
