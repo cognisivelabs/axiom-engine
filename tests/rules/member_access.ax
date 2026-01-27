@@ -5,4 +5,9 @@ let userName: string = user.name;
 let userCity: string = user.address.city;
 
 // Return city checks
-userCity
+userCity;
+
+// Deep nesting
+let deepZip: string = user.company.address.zip;
+userCity + "-" + deepZip
+

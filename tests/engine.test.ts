@@ -52,6 +52,17 @@ describe('Axiom Engine Integration Tests', () => {
                         properties: {
                             'city': 'string'
                         }
+                    },
+                    'company': {
+                        kind: 'object',
+                        properties: {
+                            'address': {
+                                kind: 'object',
+                                properties: {
+                                    'zip': 'string'
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -62,6 +73,11 @@ describe('Axiom Engine Integration Tests', () => {
                 'name': 'Alice',
                 'address': {
                     'city': 'Wonderland'
+                },
+                'company': {
+                    'address': {
+                        'zip': '88081'
+                    }
                 }
             }
         };
@@ -70,7 +86,7 @@ describe('Axiom Engine Integration Tests', () => {
         Axiom.check(ast, contextTypes);
         const result = Axiom.execute(ast, contextData);
 
-        assert.strictEqual(result, 'Wonderland', 'Should access nested property');
+        assert.strictEqual(result, 'Wonderland-88081', 'Should access both nested properties');
     });
 
     it('should throw error on invalid property access', () => {
