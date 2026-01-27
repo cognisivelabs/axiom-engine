@@ -2,7 +2,8 @@
 import { Token, TokenType } from '../common/TokenType';
 import {
     Statement, VarDecl, IfStmt, BlockStmt, ExpressionStmt, Assignment,
-    Expression, BinaryExpr, LiteralExpr, VariableExpr, Type
+    Expression, BinaryExpr, LiteralExpr, VariableExpr, Type,
+    CallExpr, LambdaExpr, MemberExpr
 } from '../common/AST';
 
 export class Parser {
@@ -210,15 +211,52 @@ export class Parser {
         let expr = this.primary();
 
         while (true) {
-            if (this.match(TokenType.DOT)) {
+            if (this.match(TokenType.LPAREN)) {
+                expr = this.finishCall(expr);
+            } else if (this.match(TokenType.DOT)) {
                 const name = this.consume(TokenType.IDENTIFIER, "Expect property name after '.'.").value;
-                expr = { kind: 'Member', object: expr, property: name };
+
+                // Check for macro: .exists(x, ...)
+                if (name === 'exists' || name === 'all') {
+                    this.consume(TokenType.LPAREN, "Expect '(' after macro name.");
+                    expr = this.finishMacroCall(expr, name);
+                } else if (this.match(TokenType.LPAREN)) {
+                    // Generic method call (future proofing, though macros cover usage now)
+                    const callee: MemberExpr = { kind: 'Member', object: expr, property: name };
+                    expr = this.finishCall(callee);
+                } else {
+                    // Property access
+                    expr = { kind: 'Member', object: expr, property: name };
+                }
             } else {
                 break;
             }
         }
 
         return expr;
+    }
+
+    private finishCall(callee: Expression): CallExpr {
+        const args: Expression[] = [];
+        if (!this.check(TokenType.RPAREN)) {
+            do {
+                args.push(this.expression());
+            } while (this.match(TokenType.COMMA));
+        }
+        this.consume(TokenType.RPAREN, "Expect ')' after arguments.");
+        return { kind: 'Call', callee, arguments: args };
+    }
+
+    private finishMacroCall(object: Expression, name: string): CallExpr {
+        const param = this.consume(TokenType.IDENTIFIER, "Expect lambda parameter name.").value;
+        this.consume(TokenType.COMMA, "Expect ',' after parameter.");
+        const body = this.expression();
+        this.consume(TokenType.RPAREN, "Expect ')' after macro body.");
+
+        const lambda: LambdaExpr = { kind: 'Lambda', parameter: param, body };
+        const callee: MemberExpr = { kind: 'Member', object, property: name };
+
+        return { kind: 'Call', callee, arguments: [lambda] };
     }
 
     private primary(): Expression {

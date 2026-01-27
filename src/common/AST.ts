@@ -24,7 +24,9 @@ export type Expression =
     | MemberExpr
     | ListExpr
     | LiteralExpr
-    | VariableExpr;
+    | VariableExpr
+    | CallExpr
+    | LambdaExpr;
 
 // Statements
 
@@ -96,4 +98,16 @@ export interface LiteralExpr {
 export interface VariableExpr {
     kind: 'Variable';
     name: string;
+}
+
+export interface CallExpr {
+    kind: 'Call';
+    callee: Expression;
+    arguments: Expression[];
+}
+
+export interface LambdaExpr {
+    kind: 'Lambda';
+    parameter: string;
+    body: Expression;
 }
