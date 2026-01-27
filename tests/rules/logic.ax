@@ -1,0 +1,31 @@
+// Logic Operations Test
+
+let true_val: bool = true;
+let false_val: bool = false;
+
+// AND
+let and_true: bool = true && true;
+let and_false: bool = true && false;
+
+// OR
+let or_true: bool = true || false;
+let or_false: bool = false || false;
+
+// NOT
+let not_true: bool = !false;
+let not_false: bool = !true;
+
+// Comparison Integer
+let gt: bool = 10 > 5;
+let lt: bool = 5 < 10;
+let gte: bool = 10 >= 10;
+let lte: bool = 5 <= 5;
+let eq_int: bool = 10 == 10;
+let neq_int: bool = 10 != 5;
+
+// Comparison mixed with Logic
+// (10 > 5) && (20 < 30) => true && true => true
+// (10 > 5) && (20 < 30) => true && true => true
+let complex_logic: bool = (10 > 5) && (20 < 30);
+complex_logic
+

@@ -1,0 +1,27 @@
+// Math Operations Test
+
+// Addition
+let add: int = 10 + 20;
+
+// Subtraction
+let sub: int = 50 - 20;
+
+// Multiplication
+let mul: int = 5 * 6;
+
+// Division
+let div: int = 100 / 4;
+
+// Precedence: Multiplication before Addition
+// 10 + (2 * 5) = 20
+let precedence_1: int = 10 + 2 * 5; 
+
+// Precedence: Parentheses override
+// (10 + 2) * 5 = 60
+let precedence_2: int = (10 + 2) * 5;
+
+// Complex expression
+let complex: int = 100 - 20 / 2 + 5 * 2;
+// 100 - 10 + 10 = 100
+complex
+

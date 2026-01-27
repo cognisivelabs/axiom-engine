@@ -1,0 +1,28 @@
+// Control Flow Test
+
+let x: int = 10;
+let result: string = "initial";
+
+// Simple If
+if (x > 5) {
+    result = "gt_5";
+}
+
+// If-Else
+if (x < 5) {
+    result = "lt_5";
+} else {
+    // Should enter here
+    result = "else_branch";
+}
+
+// Scoping test
+let outer: int = 100;
+let inner_res: int = 0;
+
+if (true) {
+    let inner: int = 50;
+    inner_res = outer + inner;
+}
+// inner is not accessible here (if we had strict scoping check, but interpreter might leak if not careful)
+// We will test the result 'inner_res'

@@ -213,6 +213,12 @@ export class Parser {
             return { kind: 'Variable', name: this.previous().value };
         }
 
+        if (this.match(TokenType.LPAREN)) {
+            const expr = this.expression();
+            this.consume(TokenType.RPAREN, "Expect ')' after expression.");
+            return expr;
+        }
+
         throw new Error(`Expect expression at line ${this.peek().line}`);
     }
 
