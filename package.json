@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "ts-node src/index.ts test_valid.ax"
+    "test": "ts-node tests/integration.test.ts"
   },
   "keywords": [],
   "author": "",
