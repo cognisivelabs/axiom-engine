@@ -81,9 +81,15 @@ export class Interpreter {
                 return this.evaluateUnary(expr as UnaryExpr);
             case 'Member':
                 return this.evaluateMember(expr as any);
+            case 'List':
+                return this.evaluateList(expr as any);
             default:
                 throw new Error(`Unknown expression kind: ${expr}`);
         }
+    }
+
+    private evaluateList(expr: { elements: Expression[] }): any[] {
+        return expr.elements.map(e => this.evaluate(e));
     }
 
     private evaluateMember(expr: { object: Expression, property: string }): any {
@@ -125,6 +131,7 @@ export class Interpreter {
             case '<=': return left <= right;
             case '&&': return left && right;
             case '||': return left || right;
+            case 'in': return right.includes(left);
             default: throw new Error(`Unknown operator: ${expr.operator}`);
         }
     }

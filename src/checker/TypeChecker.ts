@@ -41,8 +41,8 @@ export class TypeChecker {
 
     private checkVarDecl(stmt: VarDecl): void {
         const initializerType = this.checkExpression(stmt.initializer);
-        if (initializerType !== stmt.typeAnnotation) {
-            throw new Error(`Type mismatch for variable '${stmt.name}': cannot assign ${initializerType} to ${stmt.typeAnnotation}`);
+        if (!this.areTypesEqual(initializerType, stmt.typeAnnotation)) {
+            throw new Error(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(initializerType)} to ${JSON.stringify(stmt.typeAnnotation)}`);
         }
         if (this.variables.has(stmt.name)) {
             throw new Error(`Variable '${stmt.name}' already declared.`);
@@ -56,8 +56,8 @@ export class TypeChecker {
             throw new Error(`Undefined variable '${stmt.name}'.`);
         }
         const valueType = this.checkExpression(stmt.value);
-        if (type !== valueType) {
-            throw new Error(`Type mismatch for variable '${stmt.name}': cannot assign ${valueType} to ${type}`);
+        if (!this.areTypesEqual(type, valueType)) {
+            throw new Error(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(valueType)} to ${JSON.stringify(type)}`);
         }
     }
 
@@ -98,10 +98,40 @@ export class TypeChecker {
                 return type;
             case 'Member':
                 return this.checkMember(expr as any);
+            case 'List':
+                return this.checkList(expr as any);
             default:
                 const unreachable: never = expr;
                 throw new Error(`Unknown expression kind: ${(expr as any).kind}`);
         }
+    }
+
+    private checkList(expr: { elements: Expression[] }): Type {
+        if (expr.elements.length === 0) {
+            // Empty list problem. We don't know the type.
+            // For now, let's allow it but maybe treat as 'any[]'? 
+            // Or easier: require explicit type for empty lists in variable declarations? 
+            // Let's assume int[] for empty lists for now or throw error if not inferrable.
+            // Actually, for v1, let's say empty lists are valid and we might infer ANY. 
+            // But strict typing makes this hard. 
+            // Hack for MVP: Empty list is valid, we might assume generic list.
+            // However, our Type system is strict.
+            // Let's skip empty list complexity for a moment and assume non-empty or require context.
+            // Simplest: Error on empty list if we can't infer.
+            // Let's return a temporary 'empty_list' type or just int list for now.
+            // Better: 'list<any>' equivalent?
+            // Let's stick to: All elements must match the first element's type.
+            throw new Error("Empty lists not yet supported for type inference.");
+        }
+
+        const firstType = this.checkExpression(expr.elements[0]);
+        for (let i = 1; i < expr.elements.length; i++) {
+            const type = this.checkExpression(expr.elements[i]);
+            if (!this.areTypesEqual(type, firstType)) {
+                throw new Error(`List elements must be homogeneous. Expected ${JSON.stringify(firstType)}, got ${JSON.stringify(type)} at index ${i}`);
+            }
+        }
+        return { kind: 'list', elementType: firstType };
     }
 
     private checkMember(expr: { object: Expression, property: string }): Type {
@@ -166,8 +196,44 @@ export class TypeChecker {
                 if (left === 'bool' && right === 'bool') return 'bool';
                 throw new Error(`Operator '${expr.operator}' cannot be applied to ${left} and ${right}`);
 
+            case 'in':
+                // Right must be a list
+                if (typeof right === 'string' || right.kind !== 'list') {
+                    throw new Error(`Right operand of 'in' must be a list. Got ${JSON.stringify(right)}`);
+                }
+                // Left must match list element type
+                // Note: we need strict deep equality for types ideally.
+                // For now, strict reference/value match works for current simple types.
+                if (!this.areTypesEqual(left, right.elementType)) {
+                    throw new Error(`Type mismatch: Cannot check if ${JSON.stringify(left)} is in list of ${JSON.stringify(right.elementType)}`);
+                }
+                return 'bool';
+
             default:
                 throw new Error(`Unknown operator: ${expr.operator}`);
         }
+    }
+
+    private areTypesEqual(t1: Type, t2: Type): boolean {
+        if (typeof t1 === 'string' && typeof t2 === 'string') {
+            return t1 === t2;
+        }
+        if (typeof t1 === 'object' && typeof t2 === 'object') {
+            if (t1.kind === 'list' && t2.kind === 'list') {
+                return this.areTypesEqual(t1.elementType, t2.elementType);
+            }
+            if (t1.kind === 'object' && t2.kind === 'object') {
+                // Simplified object equality: same keys and same types
+                const keys1 = Object.keys(t1.properties).sort();
+                const keys2 = Object.keys(t2.properties).sort();
+                if (keys1.length !== keys2.length) return false;
+                for (let i = 0; i < keys1.length; i++) {
+                    if (keys1[i] !== keys2[i]) return false;
+                    if (!this.areTypesEqual(t1.properties[keys1[i]], t2.properties[keys2[i]])) return false;
+                }
+                return true;
+            }
+        }
+        return false;
     }
 }

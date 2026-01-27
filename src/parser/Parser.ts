@@ -38,6 +38,13 @@ export class Parser {
         else if (this.match(TokenType.TYPE_BOOL)) typeAnnotation = 'bool';
         else throw new Error("Expect type annotation (int, string, bool).");
 
+        // Check for array type: int[]
+        // We only support one level of array for now for simplicity, or we can loop.
+        if (this.match(TokenType.LBRACKET)) {
+            this.consume(TokenType.RBRACKET, "Expect ']' after '[' for array type.");
+            typeAnnotation = { kind: 'list', elementType: typeAnnotation };
+        }
+
         this.consume(TokenType.EQUALS, "Expect '=' after variable declaration.");
         const initializer = this.expression();
         this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
@@ -156,7 +163,7 @@ export class Parser {
     private comparison(): Expression {
         let expr = this.term();
 
-        while (this.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) {
+        while (this.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL, TokenType.IN)) {
             const operator = this.previous().value;
             const right = this.term();
             expr = { kind: 'Binary', left: expr, operator, right };
@@ -233,6 +240,17 @@ export class Parser {
             const expr = this.expression();
             this.consume(TokenType.RPAREN, "Expect ')' after expression.");
             return expr;
+        }
+
+        if (this.match(TokenType.LBRACKET)) {
+            const elements: Expression[] = [];
+            if (!this.check(TokenType.RBRACKET)) {
+                do {
+                    elements.push(this.expression());
+                } while (this.match(TokenType.COMMA));
+            }
+            this.consume(TokenType.RBRACKET, "Expect ']' after list elements.");
+            return { kind: 'List', elements };
         }
 
         throw new Error(`Expect expression at line ${this.peek().line}`);
