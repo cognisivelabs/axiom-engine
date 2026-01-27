@@ -126,10 +126,8 @@ describe('Axiom Engine Integration Tests', () => {
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});
 
-        // We can't easily check variables directly unless we return them or expose environment.
-        // But we can check execution result if we make the script return something.
-        // Let's rely on checking that it RUNS without error, and maybe return a check.
-        // Update lists.ax to return 'is_valid' which should be true.
+        const result = Axiom.execute(ast, {});
+        assert.strictEqual(result, true, 'Result should be true (admin in list)');
     });
 
     it('should throw error on inhomogeneous list', () => {
