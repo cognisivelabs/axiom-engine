@@ -1,0 +1,22 @@
+{
+  "name": "axiom-lang",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "safescript": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "ts-node src/index.ts test_valid.ax"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

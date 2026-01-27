@@ -1,0 +1,10 @@
+let discount: int = 0;
+
+if (is_vip) {
+  discount = 50;
+} else {
+  discount = 0;
+}
+
+let final_price: int = base_price - discount;
+final_price;
