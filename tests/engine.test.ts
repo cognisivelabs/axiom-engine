@@ -109,16 +109,12 @@ describe('Axiom Engine Integration Tests', () => {
         const source = readRule('math.ax');
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});
-        // Inspect internal state manually since the script doesn't return one single value
-        // We will execute and then check if it runs without error. 
-        // Ideally we'd inspect the interpreter's environment, but `execute` returns the last value.
 
-        // Let's modify Axiom.execute to optionally return the environment? 
-        // Or better, let's trust that if it runs without throwing, and we check the final value 'complex'.
+        // Execute the rule; it should return the value of the last expression 'complex'.
 
         const finalResult = Axiom.execute(ast, {});
-        // complex = 100 - 10 + 10 = 100
-        assert.strictEqual(finalResult, 100, 'Complex math expression evaluation failed');
+        // see math.ax for calculation logic: 30 + 30 + 30 + 25 + 100 = 215
+        assert.strictEqual(finalResult, 215, 'Math variables integration failed');
     });
 
     it('should verify List operations and IN operator', () => {
