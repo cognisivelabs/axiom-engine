@@ -100,7 +100,6 @@ export class TypeChecker {
                 return this.checkMember(expr as any);
             case 'List':
                 return this.checkList(expr as any);
-
             case 'Call':
                 return this.checkCall(expr as CallExpr);
             case 'Lambda':
