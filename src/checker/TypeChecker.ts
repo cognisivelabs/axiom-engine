@@ -1,7 +1,7 @@
 
 import {
     Statement, Expression, Type, VarDecl, BinaryExpr, IfStmt, BlockStmt,
-    ExpressionStmt, UnaryExpr
+    ExpressionStmt, UnaryExpr, CallExpr, MemberExpr, LambdaExpr
 } from '../common/AST';
 
 export class TypeChecker {
@@ -100,9 +100,79 @@ export class TypeChecker {
                 return this.checkMember(expr as any);
             case 'List':
                 return this.checkList(expr as any);
+            case 'Call':
+                return this.checkCall(expr as CallExpr);
+            case 'Lambda':
+                throw new Error("Lambdas are only allowed as arguments to macros.");
             default:
                 const unreachable: never = expr;
                 throw new Error(`Unknown expression kind: ${(expr as any).kind}`);
+        }
+    }
+
+    private checkCall(expr: CallExpr): Type {
+        // 1. Check for 'has' macro: has(expr)
+        if (expr.callee.kind === 'Variable' && (expr.callee as any).name === 'has') {
+            if (expr.arguments.length !== 1) throw new Error("Macro 'has' expects exactly 1 argument.");
+            const arg = expr.arguments[0];
+            if (arg.kind !== 'Member') throw new Error("Macro 'has' expects a property access (e.g. has(user.name)).");
+            // validation of the property path is tricky because 'has' suppresses errors. 
+            // verifying it is a MemberExpr is enough for static check? 
+            // We should ideally check that the ROOT variable exists.
+            this.checkHasArg(arg as MemberExpr);
+            return 'bool';
+        }
+
+        // 2. Check for list macros: list.exists, list.all
+        if (expr.callee.kind === 'Member') {
+            const member = expr.callee as MemberExpr;
+            const method = member.property;
+
+            if (method === 'exists' || method === 'all') {
+                const listType = this.checkExpression(member.object);
+                if (typeof listType === 'string' || listType.kind !== 'list') {
+                    throw new Error(`Macro '${method}' can only be used on lists.`);
+                }
+
+                if (expr.arguments.length !== 1 || expr.arguments[0].kind !== 'Lambda') {
+                    throw new Error(`Macro '${method}' expects a lambda argument.`);
+                }
+
+                const lambda = expr.arguments[0] as LambdaExpr;
+
+                // Add parameter to scope
+                if (this.variables.has(lambda.parameter)) throw new Error(`Variable '${lambda.parameter}' shadows existing variable.`);
+                this.variables.set(lambda.parameter, listType.elementType);
+
+                // Check body
+                const bodyType = this.checkExpression(lambda.body);
+
+                // Remove parameter from scope (simple cleanup)
+                this.variables.delete(lambda.parameter);
+
+                if (bodyType !== 'bool') {
+                    throw new Error(`Macro '${method}' predicate must return boolean.`);
+                }
+                return 'bool';
+            }
+        }
+
+        throw new Error("Unknown function call or macro.");
+    }
+
+    private checkHasArg(expr: MemberExpr): void {
+        // Verify root object exists. The rest of the path is checked at runtime (safe).
+        if (expr.object.kind === 'Variable') {
+            if (!this.variables.has((expr.object as any).name)) {
+                throw new Error(`Undefined variable '${(expr.object as any).name}' in has() check.`);
+            }
+        } else if (expr.object.kind === 'Member') {
+            this.checkHasArg(expr.object as MemberExpr);
+        } else {
+            // Allow 'has' on other expressions?
+            // For now, strict: has(user.address)
+            // Check valid base.
+            this.checkExpression(expr.object);
         }
     }
 

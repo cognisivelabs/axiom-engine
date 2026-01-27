@@ -1,0 +1,17 @@
+// Macros Test
+
+// has macro
+let has_name: bool = has(user.name);
+let has_missing: bool = has(user.missing_prop);
+
+// list.exists
+let numbers: int[] = [1, 2, 3, 4];
+let has_large: bool = numbers.exists(n, n > 3);
+let has_huge: bool = numbers.exists(n, n > 10);
+
+// list.all
+let all_positive: bool = numbers.all(n, n > 0);
+let all_large: bool = numbers.all(n, n > 3);
+
+// Returns verify boolean AND of all checks
+has_name && !has_missing && has_large && !has_huge && all_positive && !all_large

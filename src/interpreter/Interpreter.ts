@@ -1,7 +1,7 @@
 
 import {
     Statement, Expression, VarDecl, BinaryExpr, IfStmt, BlockStmt,
-    ExpressionStmt, UnaryExpr
+    ExpressionStmt, UnaryExpr, CallExpr, LambdaExpr, MemberExpr
 } from '../common/AST';
 
 export class Interpreter {
@@ -83,9 +83,70 @@ export class Interpreter {
                 return this.evaluateMember(expr as any);
             case 'List':
                 return this.evaluateList(expr as any);
+            case 'List':
+                return this.evaluateList(expr as any);
+            case 'Call':
+                return this.evaluateCall(expr as CallExpr);
             default:
                 throw new Error(`Unknown expression kind: ${expr}`);
         }
+    }
+
+    private evaluateCall(expr: CallExpr): any {
+        // 1. 'has' macro
+        if (expr.callee.kind === 'Variable' && (expr.callee as any).name === 'has') {
+            const arg = expr.arguments[0];
+            try {
+                this.evaluate(arg);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // 2. List macros
+        if (expr.callee.kind === 'Member') {
+            const member = expr.callee as MemberExpr;
+            const method = member.property;
+
+            if (method === 'exists' || method === 'all') {
+                const list = this.evaluate(member.object);
+                if (!Array.isArray(list)) throw new Error("Macro called on non-list.");
+
+                const lambda = expr.arguments[0] as LambdaExpr;
+                const paramName = lambda.parameter;
+
+                const previousValue = this.environment.get(paramName);
+                const hasPrevious = this.environment.has(paramName);
+
+                try {
+                    if (method === 'exists') {
+                        for (const item of list) {
+                            this.environment.set(paramName, item);
+                            const result = this.evaluate(lambda.body);
+                            if (result === true) return true;
+                        }
+                        return false;
+                    }
+                    if (method === 'all') {
+                        for (const item of list) {
+                            this.environment.set(paramName, item);
+                            const result = this.evaluate(lambda.body);
+                            if (result === false) return false;
+                        }
+                        return true;
+                    }
+                } finally {
+                    // Restore environment
+                    if (hasPrevious) {
+                        this.environment.set(paramName, previousValue);
+                    } else {
+                        this.environment.delete(paramName);
+                    }
+                }
+            }
+        }
+        throw new Error("Unknown macro.");
     }
 
     private evaluateList(expr: { elements: Expression[] }): any[] {

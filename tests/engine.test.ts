@@ -126,6 +126,26 @@ describe('Axiom Engine Integration Tests', () => {
         assert.strictEqual(result, true, 'Result should be true (admin in list)');
     });
 
+    it('should verify Macros (has, exists, all)', () => {
+        const source = readRule('macros.ax');
+        const contextTypes: any = {
+            'user': {
+                kind: 'object',
+                properties: {
+                    'name': 'string'
+                }
+            }
+        };
+
+        const ast = Axiom.compile(source);
+        Axiom.check(ast, contextTypes);
+
+        const result = Axiom.execute(ast, {
+            'user': { name: 'Alice' }
+        });
+        assert.strictEqual(result, true, 'Macros verification failed');
+    });
+
     it('should throw error on inhomogeneous list', () => {
         const source = 'let x: int[] = [1, "2"];';
         try {
