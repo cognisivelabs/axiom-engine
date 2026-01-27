@@ -113,8 +113,8 @@ describe('Axiom Engine Integration Tests', () => {
         // Execute the rule; it should return the value of the last expression 'complex'.
 
         const finalResult = Axiom.execute(ast, {});
-        // complex = 100 - 10 + 10 = 100
-        assert.strictEqual(finalResult, 100, 'Complex math expression evaluation failed');
+        // see math.ax for calculation logic: 30 + 30 + 30 + 25 + 100 = 215
+        assert.strictEqual(finalResult, 215, 'Math variables integration failed');
     });
 
     it('should verify List operations and IN operator', () => {
