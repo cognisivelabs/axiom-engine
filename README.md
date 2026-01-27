@@ -2,7 +2,7 @@
 
 **The Type-Safe Rule Engine for Node.js.**
 
-Axiom (formerly SafeScript) is a lightweight, secure, and type-safe rule engine designed for the modern TypeScript/JavaScript ecosystem. It allows you to externalize business logic from your application code, empowering you to change rules without redeploying.
+Axiom is a lightweight, secure, and type-safe rule engine designed for the modern TypeScript/JavaScript ecosystem. It allows you to externalize business logic from your application code, empowering you to change rules without redeploying.
 
 Inspired by **Google CEL** (Common Expression Language).
 
