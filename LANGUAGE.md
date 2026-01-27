@@ -53,6 +53,9 @@ final_price; // The script returns 100
 | :--- | :--- | :--- |
 | `+`, `-`, `*`, `/` | `int` | `int` |
 | `==`, `!=` | All Types | `bool` |
+| `>`, `<`, `>=`, `<=` | `int` | `bool` |
+| `&&`, `||` | `bool` | `bool` |
+| `!` (Unary) | `bool` | `bool` |
 
 ## Context (Input Variables)
 Variables passed from the Host Application are available globally. You do not need to declare them; they are injected.

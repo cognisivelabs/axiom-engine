@@ -26,6 +26,15 @@ export enum TokenType {
     // Comparison
     EQ_EQ,
     BANG_EQ,
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL,
+
+    // Logic
+    AND,
+    OR,
+    BANG,
 
     // Punctuation
     SEMICOLON,

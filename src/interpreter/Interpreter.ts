@@ -1,7 +1,7 @@
 
 import {
     Statement, Expression, VarDecl, BinaryExpr, IfStmt, BlockStmt,
-    ExpressionStmt
+    ExpressionStmt, UnaryExpr
 } from '../common/AST';
 
 export class Interpreter {
@@ -77,8 +77,19 @@ export class Interpreter {
                 return this.environment.get(expr.name);
             case 'Binary':
                 return this.evaluateBinary(expr as BinaryExpr);
+            case 'Unary':
+                return this.evaluateUnary(expr as UnaryExpr);
             default:
                 throw new Error(`Unknown expression kind: ${expr}`);
+        }
+    }
+
+    private evaluateUnary(expr: UnaryExpr): any {
+        const right = this.evaluate(expr.right);
+        switch (expr.operator) {
+            case '!': return !right;
+            case '-': return -right;
+            default: throw new Error(`Unknown unary operator: ${expr.operator}`);
         }
     }
 
@@ -93,6 +104,12 @@ export class Interpreter {
             case '/': return left / right;
             case '==': return left === right;
             case '!=': return left !== right;
+            case '>': return left > right;
+            case '>=': return left >= right;
+            case '<': return left < right;
+            case '<=': return left <= right;
+            case '&&': return left && right;
+            case '||': return left || right;
             default: throw new Error(`Unknown operator: ${expr.operator}`);
         }
     }

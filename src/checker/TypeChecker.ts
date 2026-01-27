@@ -1,7 +1,7 @@
 
 import {
     Statement, Expression, Type, VarDecl, BinaryExpr, IfStmt, BlockStmt,
-    ExpressionStmt
+    ExpressionStmt, UnaryExpr
 } from '../common/AST';
 
 export class TypeChecker {
@@ -88,6 +88,8 @@ export class TypeChecker {
         switch (expr.kind) {
             case 'Binary':
                 return this.checkBinary(expr as BinaryExpr);
+            case 'Unary':
+                return this.checkUnary(expr as UnaryExpr);
             case 'Literal':
                 return expr.type;
             case 'Variable':
@@ -97,6 +99,20 @@ export class TypeChecker {
             default:
                 const unreachable: never = expr;
                 throw new Error(`Unknown expression kind: ${(expr as any).kind}`);
+        }
+    }
+
+    private checkUnary(expr: UnaryExpr): Type {
+        const right = this.checkExpression(expr.right);
+        switch (expr.operator) {
+            case '!':
+                if (right !== 'bool') throw new Error(`Operator '!' can only be applied to boolean, got ${right}`);
+                return 'bool';
+            case '-':
+                if (right !== 'int') throw new Error(`Operator '-' can only be applied to integer, got ${right}`);
+                return 'int';
+            default:
+                throw new Error(`Unknown unary operator: ${expr.operator}`);
         }
     }
 
@@ -122,6 +138,18 @@ export class TypeChecker {
                     throw new Error(`Cannot compare ${left} and ${right} for equality`);
                 }
                 return 'bool';
+
+            case '>':
+            case '>=':
+            case '<':
+            case '<=':
+                if (left === 'int' && right === 'int') return 'bool';
+                throw new Error(`Operator '${expr.operator}' cannot be applied to ${left} and ${right}`);
+
+            case '&&':
+            case '||':
+                if (left === 'bool' && right === 'bool') return 'bool';
+                throw new Error(`Operator '${expr.operator}' cannot be applied to ${left} and ${right}`);
 
             default:
                 throw new Error(`Unknown operator: ${expr.operator}`);

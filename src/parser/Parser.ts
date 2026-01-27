@@ -99,18 +99,64 @@ export class Parser {
 
     private expressionStatement(): ExpressionStmt {
         const expr = this.expression();
-        this.consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+
+        // Allow implicit return: semicolon is optional if it's the last statement
+        if (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
+            this.consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+        } else {
+            // If we are at RBRACE or EOF, check if there is a semicolon optionally
+            if (this.check(TokenType.SEMICOLON)) {
+                this.advance();
+            }
+        }
+
         return { kind: 'ExpressionStmt', expression: expr };
     }
 
     private expression(): Expression {
-        return this.equality();
+        return this.logicOr();
+    }
+
+    private logicOr(): Expression {
+        let expr = this.logicAnd();
+
+        while (this.match(TokenType.OR)) {
+            const operator = this.previous().value;
+            const right = this.logicAnd();
+            expr = { kind: 'Binary', left: expr, operator, right };
+        }
+
+        return expr;
+    }
+
+    private logicAnd(): Expression {
+        let expr = this.equality();
+
+        while (this.match(TokenType.AND)) {
+            const operator = this.previous().value;
+            const right = this.equality();
+            expr = { kind: 'Binary', left: expr, operator, right };
+        }
+
+        return expr;
     }
 
     private equality(): Expression {
-        let expr = this.term();
+        let expr = this.comparison();
 
         while (this.match(TokenType.EQ_EQ, TokenType.BANG_EQ)) {
+            const operator = this.previous().value;
+            const right = this.comparison();
+            expr = { kind: 'Binary', left: expr, operator, right };
+        }
+
+        return expr;
+    }
+
+    private comparison(): Expression {
+        let expr = this.term();
+
+        while (this.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) {
             const operator = this.previous().value;
             const right = this.term();
             expr = { kind: 'Binary', left: expr, operator, right };
@@ -132,15 +178,25 @@ export class Parser {
     }
 
     private factor(): Expression {
-        let expr = this.primary();
+        let expr = this.unary();
 
         while (this.match(TokenType.DIVIDE, TokenType.MULTIPLY)) {
             const operator = this.previous().value;
-            const right = this.primary();
+            const right = this.unary();
             expr = { kind: 'Binary', left: expr, operator, right };
         }
 
         return expr;
+    }
+
+    private unary(): Expression {
+        if (this.match(TokenType.BANG, TokenType.MINUS)) {
+            const operator = this.previous().value;
+            const right = this.unary();
+            return { kind: 'Unary', operator, right };
+        }
+
+        return this.primary();
     }
 
     private primary(): Expression {

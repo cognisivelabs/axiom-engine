@@ -1,0 +1,22 @@
+// test_features.ax
+
+// 1. Comparisons
+let age: int = 20;
+let is_adult: bool = age >= 18;
+
+// 2. Logic (AND/OR/NOT)
+let has_ticket: bool = true;
+let is_banned: bool = false;
+
+let can_enter: bool = is_adult && has_ticket && !is_banned;
+
+// 3. Conditional using new ops
+let status: string = "";
+if (age > 60 || age < 10) {
+    status = "Special";
+} else {
+    status = "Regular";
+}
+
+// Return implicit result (bool)
+can_enter

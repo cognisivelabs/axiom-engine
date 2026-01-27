@@ -10,6 +10,7 @@ export type Statement =
 
 export type Expression =
     | BinaryExpr
+    | UnaryExpr
     | LiteralExpr
     | VariableExpr;
 
@@ -52,6 +53,12 @@ export interface ExpressionStmt {
 export interface BinaryExpr {
     kind: 'Binary';
     left: Expression;
+    operator: string;
+    right: Expression;
+}
+
+export interface UnaryExpr {
+    kind: 'Unary';
     operator: string;
     right: Expression;
 }

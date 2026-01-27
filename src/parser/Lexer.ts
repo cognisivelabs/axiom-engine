@@ -55,18 +55,61 @@ export class Lexer {
                         this.advance();
                     }
                     break;
+                    break;
                 case '!':
                     if (this.peekNext() === '=') {
                         this.advance(); this.advance();
                         tokens.push({ type: TokenType.BANG_EQ, value: '!=', line: this.line });
                     } else {
-                        throw new Error(`Unexpected character '!' at line ${this.line}`);
+                        tokens.push(this.singleChar(TokenType.BANG, '!'));
+                    }
+                    break;
+                case '>':
+                    if (this.peekNext() === '=') {
+                        this.advance(); this.advance();
+                        tokens.push({ type: TokenType.GREATER_EQUAL, value: '>=', line: this.line });
+                    } else {
+                        tokens.push(this.singleChar(TokenType.GREATER, '>'));
+                    }
+                    break;
+                case '<':
+                    if (this.peekNext() === '=') {
+                        this.advance(); this.advance();
+                        tokens.push({ type: TokenType.LESS_EQUAL, value: '<=', line: this.line });
+                    } else {
+                        tokens.push(this.singleChar(TokenType.LESS, '<'));
+                    }
+                    break;
+                case '&':
+                    if (this.peekNext() === '&') {
+                        this.advance(); this.advance();
+                        tokens.push({ type: TokenType.AND, value: '&&', line: this.line });
+                    } else {
+                        throw new Error(`Unexpected character '&' at line ${this.line}`);
+                    }
+                    break;
+                case '|':
+                    if (this.peekNext() === '|') {
+                        this.advance(); this.advance();
+                        tokens.push({ type: TokenType.OR, value: '||', line: this.line });
+                    } else {
+                        throw new Error(`Unexpected character '|' at line ${this.line}`);
                     }
                     break;
                 case '+': tokens.push(this.singleChar(TokenType.PLUS, '+')); break;
                 case '-': tokens.push(this.singleChar(TokenType.MINUS, '-')); break;
                 case '*': tokens.push(this.singleChar(TokenType.MULTIPLY, '*')); break;
-                case '/': tokens.push(this.singleChar(TokenType.DIVIDE, '/')); break;
+                case '/':
+                    if (this.peekNext() === '/') {
+                        // Comment: skip until end of line
+                        while (this.peek() !== '\n' && !this.isAtEnd()) {
+                            this.advance();
+                        }
+                        break;
+                    } else {
+                        tokens.push(this.singleChar(TokenType.DIVIDE, '/'));
+                        break;
+                    }
                 case ';': tokens.push(this.singleChar(TokenType.SEMICOLON, ';')); break;
                 case ':': tokens.push(this.singleChar(TokenType.COLON, ':')); break;
                 case '(': tokens.push(this.singleChar(TokenType.LPAREN, '(')); break;
@@ -125,5 +168,9 @@ export class Lexer {
 
     private advance(): string {
         return this.source[this.position++];
+    }
+
+    private isAtEnd(): boolean {
+        return this.position >= this.source.length;
     }
 }
