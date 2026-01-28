@@ -2,6 +2,7 @@
 import { Axiom } from '../src';
 import * as fs from 'fs';
 import * as path from 'path';
+import { performance } from 'perf_hooks';
 
 // Utils
 const ITERATIONS = 100_000;

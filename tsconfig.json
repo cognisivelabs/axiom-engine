@@ -9,6 +9,7 @@
     "src/**/*",
     "tests/**/*",
     "bin/**/*",
-    "examples/**/*"
+    "examples/**/*",
+    "benchmarks/**/*"
   ]
 }
