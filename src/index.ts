@@ -5,6 +5,7 @@ import { Parser } from './parser/Parser';
 import { TypeChecker } from './checker/TypeChecker';
 import { Interpreter } from './interpreter/Interpreter';
 import { Statement, Type } from './common/AST';
+import { ErrorReporter } from './common/ErrorReporter';
 
 export class Axiom {
     static compile(source: string): Statement[] {
@@ -73,7 +74,7 @@ if (require.main === module) {
         console.log("--------------------");
         console.log("Final Result:", result);
     } catch (e: any) {
-        console.error(`Error: ${e.message}`);
+        ErrorReporter.report(e);
         process.exit(1);
     }
 }

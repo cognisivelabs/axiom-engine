@@ -1,5 +1,6 @@
 
 import { Token, TokenType } from '../common/TokenType';
+import { SyntaxError } from '../common/Errors';
 import {
     Statement, VarDecl, IfStmt, BlockStmt, ExpressionStmt, Assignment,
     Expression, BinaryExpr, LiteralExpr, VariableExpr, Type,
@@ -307,7 +308,7 @@ export class Parser {
             return { kind: 'List', elements };
         }
 
-        throw new Error(`Expect expression at line ${this.peek().line}`);
+        throw new SyntaxError("Expect expression", this.peek().line);
     }
 
     private match(...types: TokenType[]): boolean {
@@ -344,6 +345,6 @@ export class Parser {
 
     private consume(type: TokenType, message: string): Token {
         if (this.check(type)) return this.advance();
-        throw new Error(message + ` at line ${this.peek().line}`);
+        throw new SyntaxError(message, this.peek().line);
     }
 }
