@@ -1,0 +1,16 @@
+{
+    "user": {
+        "is_vip": true,
+        "email": "alice@gmail.com",
+        "state": "CA"
+    },
+    "cart": {
+        "total": 100,
+        "items": []
+    },
+    "platform": {
+        "promo_code": "SUMMER2026"
+    },
+    "execution_date": "2026-06-01",
+    "event_start_date": "2026-06-05"
+}

@@ -1,0 +1,11 @@
+{
+    "name": "ObjectsRule",
+    "inputs": {},
+    "outputs": {
+        "status": "string",
+        "code": "int",
+        "meta": {
+            "version": "string"
+        }
+    }
+}

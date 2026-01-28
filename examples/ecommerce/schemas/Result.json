@@ -1,0 +1,5 @@
+{
+    "final_price": "int",
+    "discount_percentage": "int",
+    "currency": "string"
+}

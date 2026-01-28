@@ -4,63 +4,79 @@ import * as assert from 'assert';
 import * as path from 'path';
 import { exec } from 'child_process';
 import * as util from 'util';
+import * as fs from 'fs';
 
 const execAsync = util.promisify(exec);
-const CLI_PATH = path.resolve(__dirname, '../bin/axiom.ts');
+const CLI_PATH = path.resolve(__dirname, '../src/index.ts');
 const COMMAND_PREFIX = `npx ts-node ${CLI_PATH}`;
 
 describe('Axiom CLI Integration Tests', () => {
 
-    it('should successfully check a valid file', async () => {
-        const rulePath = path.resolve(__dirname, 'rules/math.ax');
-        const { stdout, stderr } = await execAsync(`${COMMAND_PREFIX} check ${rulePath}`);
+    const fixtureDir = path.resolve(__dirname, 'fixtures/simple');
+    const rulePath = path.join(fixtureDir, 'math.arl');
+    const contractPath = path.join(fixtureDir, 'contract.json');
+    const dataPath = path.join(fixtureDir, 'data.json');
 
-        assert.ok(stdout.includes('Checking'));
-        assert.ok(stdout.includes('Syntax valid'));
+    it('should successfully run a valid rule with flags', async () => {
+        const cmd = `${COMMAND_PREFIX} ${rulePath} --contract ${contractPath} --data ${dataPath}`;
+        const { stdout, stderr } = await execAsync(cmd);
         assert.strictEqual(stderr, '');
+        assert.ok(stdout.includes('Final Result: 30'), 'Should return correct calculation result 30');
     });
 
-    it('should successfully run a rule file and return result', async () => {
-        const rulePath = path.resolve(__dirname, 'rules/math.ax');
-        const { stdout } = await execAsync(`${COMMAND_PREFIX} run ${rulePath}`);
+    it('should run all test rules in regression', async () => {
+        const fixturesDir = path.join(__dirname, 'fixtures');
+        const items = fs.readdirSync(fixturesDir);
 
-        // math.ax calculates 1 + 2 * 3 + (100 in [100, 200] ? 10 : 0) etc? 
-        // Let's just check it returns a number. The exact rule content might change.
-        // Based on previous runs it returned 215.
-        const result = parseInt(stdout.trim());
-        assert.ok(!isNaN(result));
+        for (const item of items) {
+            const dirPath = path.join(fixturesDir, item);
+            if (!fs.statSync(dirPath).isDirectory()) continue;
+            if (item === 'simple') continue; // Skip simple fixture used by other tests
+
+            // Convention: rule file named same as directory + .arl
+            const ruleFile = path.join(dirPath, `${item}.arl`);
+            const contractFile = path.join(dirPath, 'contract.json');
+            const dataFile = path.join(dirPath, 'data.json');
+
+            if (fs.existsSync(ruleFile) && fs.existsSync(contractFile) && fs.existsSync(dataFile)) {
+                // console.log(`Running regression for ${item}...`);
+                const cmd = `${COMMAND_PREFIX} ${ruleFile} --contract ${contractFile} --data ${dataFile}`;
+                try {
+                    const { stdout, stderr } = await execAsync(cmd);
+                    assert.strictEqual(stderr, '', `Error running ${item}`);
+                    assert.ok(stdout.includes('Type Check Passed'), `${item} failed type check`);
+                } catch (e: any) {
+                    assert.fail(`Failed to execute ${item}: ${e.message}\n${e.stdout}\n${e.stderr}`);
+                }
+            }
+        }
     });
 
-    it('should run execution with data input', async () => {
-        const rulePath = path.resolve(__dirname, 'rules/macros.ax');
-        // macros.ax: has(user.name) ...
-        const data = JSON.stringify({ user: { name: "Alice" } });
-        // Escape quotes for shell
-        const safeData = process.platform === 'win32' ? `"${data.replace(/"/g, '\\"')}"` : `'${data}'`;
-
-        const { stdout } = await execAsync(`${COMMAND_PREFIX} run ${rulePath} --data ${safeData}`);
-        assert.strictEqual(stdout.trim(), 'true');
-    });
-
-    it('should fail cleanly on missing file', async () => {
+    it('should fail if arguments are missing', async () => {
         try {
-            await execAsync(`${COMMAND_PREFIX} check non_existent.ax`);
+            await execAsync(`${COMMAND_PREFIX} ${rulePath}`);
             assert.fail('Should have failed');
         } catch (error: any) {
-            assert.ok(error.code !== 0, 'Exit code should be non-zero');
-            // The execAsync might put stderr in the error object or return it?
-            // "If the process exits with a non-zero code... the promise is rejected with an Error...
-            // The error object... has 'stdout' and 'stderr' properties."
-            // Let's check what we actually got.
-            const actualStderr = error.stderr || '';
-            const actualStdout = error.stdout || '';
-            // console.log('DEBUG: stderr:', actualStderr);
-            // console.log('DEBUG: stdout:', actualStdout);
+            assert.ok(error.message.includes('are required'), 'Should report missing args');
+        }
+    });
 
-            assert.ok(
-                actualStderr.includes('Error') || actualStdout.includes('Error'),
-                `Expected output to contain 'Error'. stdout: ${actualStdout}, stderr: ${actualStderr}`
-            );
+    it('should fail if file extension is invalid', async () => {
+        try {
+            await execAsync(`${COMMAND_PREFIX} invalid.txt`);
+            assert.fail('Should have failed');
+        } catch (error: any) {
+            assert.ok(error.stderr.includes('must have an \'.arl\' extension'), 'Should check extension');
+        }
+    });
+
+    it('should fail gracefully if file not found', async () => {
+        try {
+            await execAsync(`${COMMAND_PREFIX} missing.arl --contract ${contractPath} --data ${dataPath}`);
+            assert.fail('Should have failed');
+        } catch (error: any) {
+            const output = error.stderr || error.stdout;
+            assert.ok(output.includes('File not found'), 'Should report missing file');
         }
     });
 });

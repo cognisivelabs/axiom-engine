@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc",
     "postbuild": "sed -i '' 's/ts-node/node/g' dist/bin/axiom.js && chmod +x dist/bin/axiom.js",
-    "test": "ts-node tests/engine.test.ts"
+    "test": "ts-node tests/engine.test.ts && ts-node tests/cli.test.ts && ts-node tests/contract.test.ts"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,11 @@
+{
+    "name": "EcommercePricingService",
+    "inputs": {
+        "user": "./schemas/User.json",
+        "cart": "./schemas/Cart.json",
+        "platform": "./schemas/Platform.json",
+        "execution_date": "string",
+        "event_start_date": "string"
+    },
+    "outputs": "./schemas/Result.json"
+}

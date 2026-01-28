@@ -1,0 +1,10 @@
+{
+    "name": "MathContract",
+    "inputs": {
+        "input": {
+            "a": "int",
+            "b": "int"
+        }
+    },
+    "outputs": "int"
+}

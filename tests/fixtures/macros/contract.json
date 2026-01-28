@@ -1,0 +1,10 @@
+{
+    "name": "MacrosRule",
+    "inputs": {
+        "user": {
+            "name": "string",
+            "missing_prop": "string"
+        }
+    },
+    "outputs": "bool"
+}

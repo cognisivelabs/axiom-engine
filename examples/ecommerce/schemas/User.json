@@ -1,0 +1,5 @@
+{
+    "is_vip": "bool",
+    "email": "string",
+    "state": "string"
+}

@@ -1,0 +1,16 @@
+{
+    "user": {
+        "tier": "gold",
+        "active": true,
+        "orders": [
+            {
+                "total": 150,
+                "status": "delivered"
+            },
+            {
+                "total": 50,
+                "status": "shipped"
+            }
+        ]
+    }
+}

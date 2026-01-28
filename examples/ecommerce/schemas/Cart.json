@@ -1,0 +1,10 @@
+{
+    "total": "int",
+    "items": [
+        {
+            "price": "int",
+            "category": "string",
+            "name": "string"
+        }
+    ]
+}

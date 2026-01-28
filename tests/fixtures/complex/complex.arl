@@ -25,8 +25,11 @@ let has_big_order: bool = user.orders.exists(o, o.total > 100);
 let all_delivered: bool = user.orders.all(o, o.status == "delivered");
 
 // Eligibility Logic
+// Eligibility Logic
+let result: bool = false;
 if (!is_active) {
-    false // Implicit return
+    result = false;
 } else {
-   (is_premium && has_big_order) || all_delivered
+   result = (is_premium && has_big_order) || all_delivered;
 }
+result

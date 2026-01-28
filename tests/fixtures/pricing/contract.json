@@ -1,0 +1,8 @@
+{
+    "name": "PricingRule",
+    "inputs": {
+        "is_vip": "bool",
+        "base_price": "int"
+    },
+    "outputs": "int"
+}
