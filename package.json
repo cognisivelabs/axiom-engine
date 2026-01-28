@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "bin": {
-    "axiom": "./bin/axiom.ts"
+    "axiom": "./dist/bin/axiom.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "postbuild": "sed -i '' 's/ts-node/node/g' dist/bin/axiom.js && chmod +x dist/bin/axiom.js",
     "test": "ts-node tests/engine.test.ts"
   },
   "keywords": [],
