@@ -1,0 +1,16 @@
+{
+    "user": {
+        "is_vip": "bool",
+        "email": "string",
+        "state": "string"
+    },
+    "cart": {
+        "total": "int",
+        "items": "list"
+    },
+    "platform": {
+        "promo_code": "string"
+    },
+    "execution_date": "string",
+    "event_start_date": "string"
+}
