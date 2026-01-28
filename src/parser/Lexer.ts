@@ -13,6 +13,7 @@ export class Lexer {
         'int': TokenType.TYPE_INT,
         'string': TokenType.TYPE_STRING,
         'bool': TokenType.TYPE_BOOL,
+        'date': TokenType.TYPE_DATE,
         'in': TokenType.IN,
     };
 

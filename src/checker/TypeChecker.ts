@@ -157,7 +157,45 @@ export class TypeChecker {
             }
         }
 
+        // 3. Global Functions
+        if (expr.callee.kind === 'Variable') {
+            const funcName = (expr.callee as any).name;
+            switch (funcName) {
+                // String Functions
+                case 'startsWith':
+                case 'endsWith':
+                case 'contains':
+                    this.checkArgCount(expr, 2, funcName);
+                    this.checkArgType(expr, 0, 'string');
+                    this.checkArgType(expr, 1, 'string');
+                    return 'bool';
+                case 'length':
+                    this.checkArgCount(expr, 1, funcName);
+                    this.checkArgType(expr, 0, 'string');
+                    return 'int';
+
+                // Date Functions
+                case 'timestamp':
+                    this.checkArgCount(expr, 1, funcName);
+                    this.checkArgType(expr, 0, 'string');
+                    return 'date';
+            }
+        }
+
         throw new Error("Unknown function call or macro.");
+    }
+
+    private checkArgCount(expr: CallExpr, count: number, name: string): void {
+        if (expr.arguments.length !== count) {
+            throw new Error(`Function '${name}' expects ${count} argument(s), got ${expr.arguments.length}.`);
+        }
+    }
+
+    private checkArgType(expr: CallExpr, index: number, expected: Type): void {
+        const argType = this.checkExpression(expr.arguments[index]);
+        if (!this.areTypesEqual(argType, expected)) {
+            throw new Error(`Type mismatch in argument ${index + 1}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(argType)}`);
+        }
     }
 
     private checkHasArg(expr: MemberExpr): void {
@@ -259,6 +297,7 @@ export class TypeChecker {
             case '<':
             case '<=':
                 if (left === 'int' && right === 'int') return 'bool';
+                if (left === 'date' && right === 'date') return 'bool'; // Support Date comparison
                 throw new Error(`Operator '${expr.operator}' cannot be applied to ${left} and ${right}`);
 
             case '&&':
