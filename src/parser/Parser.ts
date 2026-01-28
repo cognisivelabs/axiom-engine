@@ -7,6 +7,10 @@ import {
     CallExpr, LambdaExpr, MemberExpr, ObjectExpr
 } from '../common/AST';
 
+/**
+ * The Parser takes a list of Tokens and constructs an Abstract Syntax Tree (AST).
+ * It uses a Recursive Descent algorithm relative to operator precedence.
+ */
 export class Parser {
     private tokens: Token[];
     private current: number = 0;
@@ -17,6 +21,10 @@ export class Parser {
         this.filename = filename;
     }
 
+    /**
+     * Parses the tokens into a list of Statements.
+     * Starts at the top level (Declarations).
+     */
     parse(): Statement[] {
         const statements: Statement[] = [];
         while (!this.isAtEnd()) {
@@ -25,6 +33,9 @@ export class Parser {
         return statements;
     }
 
+    /**
+     * Parses a top-level declaration (variable or statement).
+     */
     private declaration(): Statement {
         if (this.match(TokenType.LET)) {
             return this.varDeclaration();
@@ -32,6 +43,9 @@ export class Parser {
         return this.statement();
     }
 
+    /**
+     * Parses a variable declaration: let x: type = value;
+     */
     private varDeclaration(): VarDecl {
         const name = this.consume(TokenType.IDENTIFIER, "Expect variable name.").value;
         this.consume(TokenType.COLON, "Expect ':' after variable name.");
@@ -58,6 +72,9 @@ export class Parser {
         return { kind: 'VarDecl', name, typeAnnotation, initializer };
     }
 
+    /**
+     * Parses a statement (If, Block, Assignment, or Expression).
+     */
     private statement(): Statement {
         if (this.match(TokenType.IF)) return this.ifStatement();
         if (this.match(TokenType.LBRACE)) return { kind: 'Block', statements: this.block() };
@@ -72,6 +89,9 @@ export class Parser {
         return this.expressionStatement();
     }
 
+    /**
+     * Parses an assignment to an existing variable.
+     */
     private assignment(): Statement {
         const name = this.consume(TokenType.IDENTIFIER, "Expect variable name.").value;
         this.consume(TokenType.EQUALS, "Expect '=' after variable name.");
@@ -80,13 +100,17 @@ export class Parser {
         return { kind: 'Assignment', name, value };
     }
 
+    /**
+     * Lookahead for the token after the current one.
+     */
     private peekNext(): Token {
         if (this.current + 1 >= this.tokens.length) return this.tokens[this.tokens.length - 1]; // EOF
         return this.tokens[this.current + 1];
     }
 
-
-
+    /**
+     * Parses an if-else control flow statement.
+     */
     private ifStatement(): IfStmt {
         this.consume(TokenType.LPAREN, "Expect '(' after 'if'.");
         const condition = this.expression();
@@ -101,6 +125,9 @@ export class Parser {
         return { kind: 'If', condition, thenBranch, elseBranch };
     }
 
+    /**
+     * Parses a curly-brace block of statements.
+     */
     private block(): Statement[] {
         const statements: Statement[] = [];
         while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
@@ -110,6 +137,9 @@ export class Parser {
         return statements;
     }
 
+    /**
+     * Parses an expression used as a statement (often returns the value).
+     */
     private expressionStatement(): ExpressionStmt {
         const expr = this.expression();
 
@@ -126,10 +156,16 @@ export class Parser {
         return { kind: 'ExpressionStmt', expression: expr };
     }
 
+    /**
+     * Entry point for expression parsing (starts at lowest precedence).
+     */
     private expression(): Expression {
         return this.logicOr();
     }
 
+    /**
+     * Parses Logical OR (||).
+     */
     private logicOr(): Expression {
         let expr = this.logicAnd();
 
@@ -142,6 +178,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Parses Logical AND (&&).
+     */
     private logicAnd(): Expression {
         let expr = this.equality();
 
@@ -154,6 +193,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Parses Equality checks (==, !=).
+     */
     private equality(): Expression {
         let expr = this.comparison();
 
@@ -166,6 +208,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Parses comparisons (>, <, >=, <=, in).
+     */
     private comparison(): Expression {
         let expr = this.term();
 
@@ -178,6 +223,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Parses additive terms (+, -).
+     */
     private term(): Expression {
         let expr = this.factor();
 
@@ -190,6 +238,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Parses multiplicative factors (*, /).
+     */
     private factor(): Expression {
         let expr = this.unary();
 
@@ -202,6 +253,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Parses unary operators (!, -).
+     */
     private unary(): Expression {
         if (this.match(TokenType.BANG, TokenType.MINUS)) {
             const operator = this.previous().value;
@@ -212,6 +266,9 @@ export class Parser {
         return this.call();
     }
 
+    /**
+     * Parses function calls or property access.
+     */
     private call(): Expression {
         let expr = this.primary();
 
@@ -241,6 +298,9 @@ export class Parser {
         return expr;
     }
 
+    /**
+     * Helper to parse arguments list for a function call.
+     */
     private finishCall(callee: Expression): CallExpr {
         const args: Expression[] = [];
         if (!this.check(TokenType.RPAREN)) {
@@ -252,6 +312,9 @@ export class Parser {
         return { kind: 'Call', callee, arguments: args };
     }
 
+    /**
+     * Helper to parse arguments for a macro (requires lambda).
+     */
     private finishMacroCall(object: Expression, name: string): CallExpr {
         const param = this.consume(TokenType.IDENTIFIER, "Expect lambda parameter name.").value;
         this.consume(TokenType.COMMA, "Expect ',' after parameter.");
@@ -264,6 +327,9 @@ export class Parser {
         return { kind: 'Call', callee, arguments: [lambda] };
     }
 
+    /**
+     * Parses primary atoms (literals, variables, grouping, objects, lists).
+     */
     private primary(): Expression {
 
         if (this.match(TokenType.FALSE)) return { kind: 'Literal', value: false, type: 'bool' };
@@ -313,6 +379,9 @@ export class Parser {
         throw new SyntaxError("Expect expression", this.peek().line, this.filename);
     }
 
+    /**
+     * Checks if current token matches types and advances if so.
+     */
     private match(...types: TokenType[]): boolean {
         for (const type of types) {
             if (this.check(type)) {
@@ -323,28 +392,46 @@ export class Parser {
         return false;
     }
 
+    /**
+     * Checks if current token is of a specific type without advancing.
+     */
     private check(type: TokenType): boolean {
         if (this.isAtEnd()) return false;
         return this.peek().type === type;
     }
 
+    /**
+     * Consumes the current token and returns it.
+     */
     private advance(): Token {
         if (!this.isAtEnd()) this.current++;
         return this.previous();
     }
 
+    /**
+     * Checks if we've reached EOF.
+     */
     private isAtEnd(): boolean {
         return this.peek().type === TokenType.EOF;
     }
 
+    /**
+     * Returns the current token.
+     */
     private peek(): Token {
         return this.tokens[this.current];
     }
 
+    /**
+     * Returns the most recently consumed token.
+     */
     private previous(): Token {
         return this.tokens[this.current - 1];
     }
 
+    /**
+     * Consumes a token if it matches the expected type, otherwise throws.
+     */
     private consume(type: TokenType, message: string): Token {
         if (this.check(type)) return this.advance();
         throw new SyntaxError(message, this.peek().line, this.filename);
