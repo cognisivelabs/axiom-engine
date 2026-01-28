@@ -14,10 +14,19 @@ export class Axiom {
         return parser.parse();
     }
 
-    static check(ast: Statement[], contextTypes: any): void {
+    static check(ast: Statement[], contextTypes: any, returnType?: any): void {
         const validatedContext = TypeChecker.validateContext(contextTypes);
+        // Validate return type if provided
+        let validatedReturn: Type | undefined = undefined;
+        if (returnType) {
+            // Reuse validateType logic (it's private, maybe make it public or use a helper?)
+            // current implementation makes validateType private but validateContext public. 
+            // We can sneakily access it or duplicate/expose it.             // Let's modify TypeChecker to make validateType public static.
+            validatedReturn = TypeChecker.validateType(returnType);
+        }
+
         const checker = new TypeChecker();
-        checker.check(ast, validatedContext);
+        checker.check(ast, validatedContext, validatedReturn);
     }
 
     static execute(ast: Statement[], contextData: Record<string, any>): any {

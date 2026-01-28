@@ -15,7 +15,7 @@ export class TypeChecker {
         return result;
     }
 
-    private static validateType(def: any): Type {
+    static validateType(def: any): Type {
         // 1. Primitive Strings and Array Logic
         if (typeof def === 'string') {
             const primitives = ['int', 'string', 'bool', 'date'];
@@ -55,12 +55,27 @@ export class TypeChecker {
         throw new Error(`Invalid type definition: ${def}`);
     }
 
-    check(statements: Statement[], contextTypes: Record<string, Type> = {}): void {
+    check(statements: Statement[], contextTypes: Record<string, Type> = {}, returnType?: Type): void {
         // Initialize variables with context types
         this.variables = new Map(Object.entries(contextTypes));
 
-        for (const stmt of statements) {
+        for (let i = 0; i < statements.length; i++) {
+            const stmt = statements[i];
             this.checkStatement(stmt);
+
+            // Validation: Check if the last statement matches the expected return type
+            if (returnType && i === statements.length - 1) {
+                if (stmt.kind !== 'ExpressionStmt') {
+                    throw new Error(`Expected return type ${JSON.stringify(returnType)} but script does not end with an expression.`);
+                }
+                const lastExprType = this.checkExpression(stmt.expression); // Re-check to get type (inefficient but safe) or we could have captured it from checkStatement if it returned type
+                // Actually checkStatement returns void. 
+                // Let's modify checkStatement to return Type | null? Or just re-check the expression here since it's cheap (just lookups usually).
+
+                if (!this.areTypesEqual(returnType, lastExprType)) {
+                    throw new Error(`Return type mismatch: expected ${JSON.stringify(returnType)}, got ${JSON.stringify(lastExprType)}`);
+                }
+            }
         }
     }
 

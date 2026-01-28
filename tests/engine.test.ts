@@ -141,6 +141,22 @@ describe('Axiom Engine Integration Tests', () => {
             assert.match(e.message, /List elements must be homogeneous/);
         }
     });
+
+    it('should validate output type', () => {
+        const source = '1 + 1';
+        const ast = Axiom.compile(source);
+
+        // Pass: Expected int
+        Axiom.check(ast, {}, 'int');
+
+        // Fail: Expected string
+        try {
+            Axiom.check(ast, {}, 'string');
+            assert.fail('Should fail output check (int vs string)');
+        } catch (e: any) {
+            assert.match(e.message, /Return type mismatch/);
+        }
+    });
     it('should verify Object Literals', () => {
         const source = readRule('objects.ax');
         const ast = Axiom.compile(source);
