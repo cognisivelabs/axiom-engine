@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "bin": {
-    "axiom": "./dist/index.js"
+    "axiom": "./bin/axiom.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -18,5 +18,8 @@
     "@types/node": "^25.0.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "commander": "^14.0.2"
   }
 }
