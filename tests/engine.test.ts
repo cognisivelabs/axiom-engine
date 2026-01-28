@@ -13,7 +13,7 @@ describe('Axiom Engine Integration Tests', () => {
     };
 
     it('should calculate pricing correctly (Simple Logic)', () => {
-        const source = readRule('pricing.ax');
+        const source = readRule('pricing.arl');
         const contextTypes: any = {
             'user_age': 'int',
             'is_vip': 'bool',
@@ -41,7 +41,7 @@ describe('Axiom Engine Integration Tests', () => {
     });
 
     it('should verify Member Access (Dot Notation)', () => {
-        const source = readRule('member_access.ax');
+        const source = readRule('member_access.arl');
         const contextTypes: any = {
             'user': {
                 'name': 'string',
@@ -94,7 +94,7 @@ describe('Axiom Engine Integration Tests', () => {
 
     it('should verify Math operations and Precedence', () => {
 
-        const source = readRule('math.ax');
+        const source = readRule('math.arl');
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});
 
@@ -106,7 +106,7 @@ describe('Axiom Engine Integration Tests', () => {
     });
 
     it('should verify List operations and IN operator', () => {
-        const source = readRule('lists.ax');
+        const source = readRule('lists.arl');
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});
 
@@ -115,7 +115,7 @@ describe('Axiom Engine Integration Tests', () => {
     });
 
     it('should verify Macros (has, exists, all)', () => {
-        const source = readRule('macros.ax');
+        const source = readRule('macros.arl');
         const contextTypes: any = {
             'user': {
                 'name': 'string'
@@ -158,7 +158,7 @@ describe('Axiom Engine Integration Tests', () => {
         }
     });
     it('should verify Object Literals', () => {
-        const source = readRule('objects.ax');
+        const source = readRule('objects.arl');
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});
 
@@ -170,7 +170,7 @@ describe('Axiom Engine Integration Tests', () => {
     });
 
     it('should verify Control Flow and Scoping', () => {
-        const source = readRule('control_flow.ax');
+        const source = readRule('control_flow.arl');
         const ast = Axiom.compile(source);
         Axiom.check(ast, {});
         const result = Axiom.execute(ast, {});
