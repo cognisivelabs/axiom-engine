@@ -26,3 +26,4 @@ if (true) {
 }
 // inner is not accessible here (if we had strict scoping check, but interpreter might leak if not careful)
 // We will test the result 'inner_res'
+inner_res

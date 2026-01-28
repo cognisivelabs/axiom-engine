@@ -1,0 +1,16 @@
+{
+    "name": "ComplexRule",
+    "inputs": {
+        "user": {
+            "tier": "string",
+            "active": "bool",
+            "orders": [
+                {
+                    "total": "int",
+                    "status": "string"
+                }
+            ]
+        }
+    },
+    "outputs": "bool"
+}

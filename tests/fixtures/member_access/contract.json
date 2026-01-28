@@ -1,0 +1,17 @@
+{
+    "name": "MemberAccessRule",
+    "inputs": {
+        "user": {
+            "name": "string",
+            "address": {
+                "city": "string"
+            },
+            "company": {
+                "address": {
+                    "zip": "string"
+                }
+            }
+        }
+    },
+    "outputs": "string"
+}

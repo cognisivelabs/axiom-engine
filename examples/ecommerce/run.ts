@@ -5,23 +5,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const RULES_PATH = path.join(__dirname, 'pricing.arl');
-const CONTEXT_PATH = path.join(__dirname, 'context.json');
+import { SchemaLoader } from '../../src/common/Contract';
+const CONTRACT_PATH = path.join(__dirname, 'contract.json');
 
 const source = fs.readFileSync(RULES_PATH, 'utf-8');
-const contextDef = JSON.parse(fs.readFileSync(CONTEXT_PATH, 'utf-8'));
+const contract = SchemaLoader.load(CONTRACT_PATH);
 
 console.log("Compiling rules...");
 const ast = Axiom.compile(source, 'pricing.arl');
 
-// Extract return type if present (convention: _returnType)
-const returnType = contextDef._returnType;
-if (returnType) {
-    delete contextDef._returnType; // Remove from input context
-}
-
 // Verify types (Strict check enabled, with Output Validation)
 try {
-    Axiom.check(ast, contextDef, returnType, 'pricing.arl');
+    Axiom.check(ast, contract, 'pricing.arl');
 } catch (e: any) {
     ErrorReporter.report(e);
     process.exit(1);

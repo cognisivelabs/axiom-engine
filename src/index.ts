@@ -6,6 +6,7 @@ import { TypeChecker } from './checker/TypeChecker';
 import { Interpreter } from './interpreter/Interpreter';
 import { Statement, Type } from './common/AST';
 import { ErrorReporter } from './common/ErrorReporter';
+import { ContractDef, SchemaLoader } from './common/Contract';
 
 export class Axiom {
     static compile(source: string, filename?: string): Statement[] {
@@ -15,19 +16,9 @@ export class Axiom {
         return parser.parse();
     }
 
-    static check(ast: Statement[], contextTypes: any, returnType?: any, filename?: string): void {
-        const validatedContext = TypeChecker.validateContext(contextTypes);
-        // Validate return type if provided
-        let validatedReturn: Type | undefined = undefined;
-        if (returnType) {
-            // Reuse validateType logic (it's private, maybe make it public or use a helper?)
-            // current implementation makes validateType private but validateContext public. 
-            // We can sneakily access it or duplicate/expose it.             // Let's modify TypeChecker to make validateType public static.
-            validatedReturn = TypeChecker.validateType(returnType);
-        }
-
+    static check(ast: Statement[], contract: ContractDef, filename?: string): void {
         const checker = new TypeChecker();
-        checker.check(ast, validatedContext, validatedReturn, filename);
+        checker.check(ast, contract, filename);
     }
 
     static execute(ast: Statement[], contextData: Record<string, any>): any {
@@ -35,45 +26,56 @@ export class Axiom {
         return interpreter.interpret(ast, contextData);
     }
 
-    // Convenience method for one-shot execution (slower due to re-parsing)
-    static eval(source: string, context: Record<string, any>, types: Record<string, Type>, filename?: string): any {
+    static eval(source: string, data: Record<string, any>, contract: ContractDef, filename?: string): any {
         const ast = this.compile(source, filename);
-        this.check(ast, types, undefined, filename);
-        return this.execute(ast, context);
+        this.check(ast, contract, filename);
+        return this.execute(ast, data);
     }
 }
 
 // CLI Logic
 if (require.main === module) {
     const args = process.argv.slice(2);
-    if (args.length !== 1) {
-        console.log("Usage: axiom <script>");
+    if (args.length === 0) {
+        console.log("Usage: axiom <script.arl> --contract <contract.json> --data <data.json>");
         process.exit(1);
     }
 
-    const filePath = args[0];
-    if (!filePath.endsWith('.arl')) {
+    const scriptPath = args[0];
+    if (!scriptPath.endsWith('.arl')) {
         console.error("Error: Axiom rule files must have an '.arl' extension.");
         process.exit(1);
     }
 
-    if (!fs.existsSync(filePath)) {
-        console.error(`File not found: ${filePath}`);
+    // Parse Flags
+    let contractPath = '';
+    let dataPath = '';
+
+    for (let i = 1; i < args.length; i++) {
+        if (args[i] === '--contract') contractPath = args[++i];
+        if (args[i] === '--data') dataPath = args[++i];
+    }
+
+    if (!contractPath || !dataPath) {
+        console.error("Error: --contract and --data arguments are required.");
         process.exit(1);
     }
 
-    const source = fs.readFileSync(filePath, 'utf-8');
+    if (!fs.existsSync(scriptPath)) { console.error(`File not found: ${scriptPath}`); process.exit(1); }
+    if (!fs.existsSync(contractPath)) { console.error(`File not found: ${contractPath}`); process.exit(1); }
+    if (!fs.existsSync(dataPath)) { console.error(`File not found: ${dataPath}`); process.exit(1); }
 
-    // Implementation of CLI using the new Axiom class
     try {
-        const contextTypes: any = { 'user_age': 'int', 'is_vip': 'bool', 'base_price': 'int' };
-        const contextValues: any = { 'user_age': 25, 'is_vip': true, 'base_price': 100 };
+        const source = fs.readFileSync(scriptPath, 'utf-8');
+        const contract = SchemaLoader.load(contractPath);
+        const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
         console.log("--- Axiom Engine ---");
-        console.log("Context:", contextValues);
+        console.log(`Rule: ${path.basename(scriptPath)}`);
+        console.log(`Contract: ${contract.name}`);
         console.log("--------------------");
 
-        const result = Axiom.eval(source, contextValues, contextTypes, path.basename(filePath));
+        const result = Axiom.eval(source, data, contract, path.basename(scriptPath));
 
         console.log("[Verifying] Type Check Passed.");
         console.log("--------------------");

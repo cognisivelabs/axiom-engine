@@ -3,24 +3,17 @@ import {
     Statement, Expression, Type, VarDecl, BinaryExpr, IfStmt, BlockStmt,
     ExpressionStmt, UnaryExpr, CallExpr, MemberExpr, LambdaExpr, ObjectExpr
 } from '../common/AST';
-import { TypeError as AxiomTypeError } from '../common/Errors';
+import { ContractDef } from '../common/Contract';
+import { AxiomError, TypeError as AxiomTypeError } from '../common/Errors';
 
 export class TypeChecker {
     private variables: Map<string, Type> = new Map();
     private filename?: string;
 
-    static validateContext(contextDef: any): Record<string, Type> {
-        const result: Record<string, Type> = {};
-        for (const [key, value] of Object.entries(contextDef)) {
-            result[key] = this.validateType(value);
-        }
-        return result;
-    }
-
     static validateType(def: any): Type {
         // 1. Primitive Strings and Array Logic
         if (typeof def === 'string') {
-            const primitives = ['int', 'string', 'bool', 'date'];
+            const primitives = ['int', 'string', 'bool', 'date', 'money'];
 
             // Check for array syntax "int[]"
             if (def.endsWith('[]')) {
@@ -54,48 +47,55 @@ export class TypeChecker {
             return { kind: 'object', properties };
         }
 
-        throw new Error(`Invalid type definition: ${def}`);
+        throw new Error(`Invalid type definition: ${JSON.stringify(def)}`);
     }
 
-    check(statements: Statement[], contextTypes: Record<string, Type> = {}, returnType?: Type, filename?: string): void {
-        // Initialize variables with context types
-        this.variables = new Map(Object.entries(contextTypes));
+    check(statements: Statement[], contract: ContractDef, filename?: string): void {
+        // 1. Initialize variables with Input contract (Context)
+        this.variables = new Map(Object.entries(contract.inputs));
         this.filename = filename;
 
         for (let i = 0; i < statements.length; i++) {
             const stmt = statements[i];
             this.checkStatement(stmt);
 
-            // Validation: Check if the last statement matches the expected return type
-            if (returnType && i === statements.length - 1) {
-                if (stmt.kind !== 'ExpressionStmt') {
-                    throw new Error(`Expected return type ${JSON.stringify(returnType)} but script does not end with an expression.`);
-                }
-                const lastExprType = this.checkExpression(stmt.expression); // Re-check to get type (inefficient but safe) or we could have captured it from checkStatement if it returned type
-                // Actually checkStatement returns void. 
-                // Let's modify checkStatement to return Type | null? Or just re-check the expression here since it's cheap (just lookups usually).
-
-                if (!this.areTypesEqual(returnType, lastExprType)) {
-                    // Improve error message for objects
-                    if (typeof returnType === 'object' && returnType.kind === 'object' &&
-                        typeof lastExprType === 'object' && lastExprType.kind === 'object') {
-
-                        for (const key of Object.keys(returnType.properties)) {
-                            const expectedProp = returnType.properties[key];
-                            const actualProp = lastExprType.properties[key];
-
-                            if (!actualProp) {
-                                throw new AxiomTypeError(`Return type mismatch: Contract requires property '${key}' of type ${JSON.stringify(expectedProp)}, but Rule result is missing it.`, this.filename);
-                            }
-                            if (!this.areTypesEqual(expectedProp, actualProp)) {
-                                throw new AxiomTypeError(`Return type mismatch at property '${key}': Contract expects ${JSON.stringify(expectedProp)}, but Rule returns ${JSON.stringify(actualProp)}`, this.filename);
-                            }
-                        }
+            // 2. Output Contract Validation (Return Type)
+            // Check if this is the last statement
+            if (i === statements.length - 1) {
+                // If we have output contracts, we expect an expression statement
+                if (contract.outputs) {
+                    if (stmt.kind !== 'ExpressionStmt') {
+                        throw new AxiomTypeError(`Contract expects outputs but script does not end with an expression.`, filename);
                     }
+                    const lastExprType = this.checkExpression(stmt.expression);
 
-                    throw new AxiomTypeError(`Return type mismatch: Contract expects ${JSON.stringify(returnType)}, but Rule returns ${JSON.stringify(lastExprType)}`, this.filename);
+                    const expectedReturnType: Type = contract.outputs;
+
+                    if (!this.areTypesEqual(expectedReturnType, lastExprType)) {
+                        this.validateObjectMatch(expectedReturnType, lastExprType, filename);
+                    }
                 }
             }
+        }
+    }
+
+    private validateObjectMatch(expected: Type, actual: Type, filename?: string): void {
+        if (typeof expected === 'object' && expected.kind === 'object' &&
+            typeof actual === 'object' && actual.kind === 'object') {
+
+            for (const key of Object.keys(expected.properties)) {
+                const expectedProp = expected.properties[key];
+                const actualProp = actual.properties[key];
+
+                if (!actualProp) {
+                    throw new AxiomTypeError(`Return type mismatch: Contract requires property '${key}' of type ${JSON.stringify(expectedProp)}, but Rule result is missing it.`, filename);
+                }
+                if (!this.areTypesEqual(expectedProp, actualProp)) {
+                    throw new AxiomTypeError(`Return type mismatch at property '${key}': Contract expects ${JSON.stringify(expectedProp)}, but Rule returns ${JSON.stringify(actualProp)}`, filename);
+                }
+            }
+        } else {
+            throw new AxiomTypeError(`Return type mismatch: Contract expects ${JSON.stringify(expected)}, but Rule returns ${JSON.stringify(actual)}`, filename);
         }
     }
 
@@ -111,7 +111,7 @@ export class TypeChecker {
                 this.checkBlock(stmt as BlockStmt);
                 break;
             case 'Assignment':
-                this.checkAssignment(stmt as any); // Cast to any because we updated AST but not imported it fully yet maybe?
+                this.checkAssignment(stmt as any);
                 break;
             case 'ExpressionStmt':
                 this.checkExpression((stmt as ExpressionStmt).expression);
@@ -133,7 +133,7 @@ export class TypeChecker {
         this.variables.set(stmt.name, stmt.typeAnnotation);
     }
 
-    private checkAssignment(stmt: any): void { // Using any for simplicity as AST interface import might need update
+    private checkAssignment(stmt: any): void {
         const type = this.variables.get(stmt.name);
         if (!type) {
             throw new AxiomTypeError(`Undefined variable '${stmt.name}'.`, this.filename);
@@ -143,8 +143,6 @@ export class TypeChecker {
             throw new AxiomTypeError(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(valueType)} to ${JSON.stringify(type)}`, this.filename);
         }
     }
-
-
 
     private checkIf(stmt: IfStmt): void {
         const conditionType = this.checkExpression(stmt.condition);
@@ -158,10 +156,6 @@ export class TypeChecker {
     }
 
     private checkBlock(stmt: BlockStmt): void {
-        // Basic block scope simulation: copy current scope, execute, restore (or rather discard changes for simple example)
-        // NOTE: For a real language, we'd want a proper environment chain. 
-        // Here we will just keep using the same map for simplicity but note that it breaks shadowing/scope-popping in a complex way.
-        // For a simple single-scope/global-scope example, this is sufficient.
         for (const s of stmt.statements) {
             this.checkStatement(s);
         }
@@ -201,9 +195,6 @@ export class TypeChecker {
             if (expr.arguments.length !== 1) throw new Error("Macro 'has' expects exactly 1 argument.");
             const arg = expr.arguments[0];
             if (arg.kind !== 'Member') throw new Error("Macro 'has' expects a property access (e.g. has(user.name)).");
-            // validation of the property path is tricky because 'has' suppresses errors. 
-            // verifying it is a MemberExpr is enough for static check? 
-            // We should ideally check that the ROOT variable exists.
             this.checkHasArg(arg as MemberExpr);
             return 'bool';
         }
@@ -232,7 +223,7 @@ export class TypeChecker {
                 // Check body
                 const bodyType = this.checkExpression(lambda.body);
 
-                // Remove parameter from scope (simple cleanup)
+                // Remove parameter from scope
                 this.variables.delete(lambda.parameter);
 
                 if (bodyType !== 'bool') {
@@ -258,8 +249,6 @@ export class TypeChecker {
                     this.checkArgCount(expr, 1, funcName);
                     this.checkArgType(expr, 0, 'string');
                     return 'int';
-
-                // Date Functions
                 case 'timestamp':
                     this.checkArgCount(expr, 1, funcName);
                     this.checkArgType(expr, 0, 'string');
@@ -292,7 +281,6 @@ export class TypeChecker {
     }
 
     private checkHasArg(expr: MemberExpr): void {
-        // Verify root object exists. The rest of the path is checked at runtime (safe).
         if (expr.object.kind === 'Variable') {
             if (!this.variables.has((expr.object as any).name)) {
                 throw new AxiomTypeError(`Undefined variable '${(expr.object as any).name}' in has() check.`, this.filename);
@@ -300,16 +288,12 @@ export class TypeChecker {
         } else if (expr.object.kind === 'Member') {
             this.checkHasArg(expr.object as MemberExpr);
         } else {
-            // Allow 'has' on other expressions?
-            // For now, strict: has(user.address)
-            // Check valid base.
             this.checkExpression(expr.object);
         }
     }
 
     private checkList(expr: { elements: Expression[] }): Type {
         if (expr.elements.length === 0) {
-            // Return a list with 'unknown' element type to indicate it can match any list type
             return { kind: 'list', elementType: 'unknown' };
         }
 
@@ -368,8 +352,10 @@ export class TypeChecker {
 
             case '==':
             case '!=':
-                if (left !== right) {
-                    throw new Error(`Cannot compare ${left} and ${right} for equality`);
+                if (!this.areTypesEqual(left, right)) {
+                    // For 'unknown' types (empty list), we allow comparison
+                    if (left === 'unknown' || right === 'unknown') return 'bool';
+                    throw new Error(`Cannot compare ${JSON.stringify(left)} and ${JSON.stringify(right)} for equality`);
                 }
                 return 'bool';
 
@@ -378,7 +364,7 @@ export class TypeChecker {
             case '<':
             case '<=':
                 if (left === 'int' && right === 'int') return 'bool';
-                if (left === 'date' && right === 'date') return 'bool'; // Support Date comparison
+                if (left === 'date' && right === 'date') return 'bool';
                 throw new Error(`Operator '${expr.operator}' cannot be applied to ${left} and ${right}`);
 
             case '&&':
@@ -387,13 +373,9 @@ export class TypeChecker {
                 throw new Error(`Operator '${expr.operator}' cannot be applied to ${left} and ${right}`);
 
             case 'in':
-                // Right must be a list
                 if (typeof right === 'string' || right.kind !== 'list') {
                     throw new Error(`Right operand of 'in' must be a list. Got ${JSON.stringify(right)}`);
                 }
-                // Left must match list element type
-                // Note: we need strict deep equality for types ideally.
-                // For now, strict reference/value match works for current simple types.
                 if (!this.areTypesEqual(left, right.elementType)) {
                     throw new Error(`Type mismatch: Cannot check if ${JSON.stringify(left)} is in list of ${JSON.stringify(right.elementType)}`);
                 }
@@ -406,7 +388,7 @@ export class TypeChecker {
 
     private areTypesEqual(t1: Type, t2: Type): boolean {
         if (typeof t1 === 'string' && typeof t2 === 'string') {
-            if (t1 === 'unknown') return true; // 'unknown' (e.g. from empty list) matches any type
+            if (t1 === 'unknown' || t2 === 'unknown') return true;
             return t1 === t2;
         }
         if (typeof t1 === 'object' && typeof t2 === 'object') {
@@ -414,10 +396,6 @@ export class TypeChecker {
                 return this.areTypesEqual(t1.elementType, t2.elementType);
             }
             if (t1.kind === 'object' && t2.kind === 'object') {
-                // Simplified object equality: same keys and same types
-
-                // Allow assignment TO generic object (properties: {}) from specific object
-                // If t2 (target) has no properties, it's treated as 'object' (any object)
                 if (Object.keys(t2.properties).length === 0) return true;
 
                 const keys1 = Object.keys(t1.properties).sort();
