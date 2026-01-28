@@ -1,0 +1,9 @@
+{
+    "name": "AccessControlPolicy",
+    "inputs": {
+        "user": "./schemas/User.json",
+        "resource": "./schemas/Resource.json",
+        "request": "./schemas/Request.json"
+    },
+    "outputs": "bool"
+}

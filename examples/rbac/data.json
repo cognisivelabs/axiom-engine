@@ -1,0 +1,21 @@
+{
+    "user": {
+        "id": "u123",
+        "roles": [
+            "manager",
+            "editor"
+        ],
+        "department": "engineering"
+    },
+    "resource": {
+        "id": "doc_001",
+        "owner_id": "u123",
+        "classification": "confidential",
+        "department": "engineering"
+    },
+    "request": {
+        "action": "read",
+        "remote_ip": "10.0.0.1",
+        "time": "2026-06-01T10:00:00Z"
+    }
+}
