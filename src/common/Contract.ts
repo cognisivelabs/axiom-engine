@@ -4,13 +4,25 @@ import * as path from 'path';
 import { Type } from './AST';
 import { TypeChecker } from '../checker/TypeChecker';
 
+/**
+ * Defines the Interface (Contract) for a Rule.
+ * Specifies expected Input variables and Output return type.
+ */
 export interface ContractDef {
     name: string;
     inputs: Record<string, Type>;
     outputs?: Type;
 }
 
+/**
+ * Utility to load and resolve Contract definitions from JSON files.
+ * Supports recursive file references for modular schemas.
+ */
 export class SchemaLoader {
+    /**
+     * Loads a contract.json file and checks all references.
+     * @param filePath Absolute or relative path to the contract file.
+     */
     static load(filePath: string): ContractDef {
         if (!fs.existsSync(filePath)) {
             throw new Error(`Contract file not found: ${filePath}`);
@@ -26,6 +38,9 @@ export class SchemaLoader {
         };
     }
 
+    /**
+     * Resolves a map of input definitions, handling external file references for the entire map.
+     */
     private static resolveSchemaMap(schemaMap: any, baseDir: string): Record<string, Type> {
         if (!schemaMap) return {};
 
@@ -47,6 +62,9 @@ export class SchemaLoader {
         return resolved;
     }
 
+    /**
+     * Resolves a single type definition (Primitive, Object, List, or File Reference).
+     */
     private static resolveType(def: any, baseDir: string): Type {
         // Case 1: Reference to external file (starts with . or /)
         if (typeof def === 'string' && (def.startsWith('./') || def.startsWith('/') || def.endsWith('.json'))) {

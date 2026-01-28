@@ -6,10 +6,18 @@ import {
 import { ContractDef } from '../common/Contract';
 import { AxiomError, TypeError as AxiomTypeError } from '../common/Errors';
 
+/**
+ * The TypeChecker verifies that the AST allows matches the defined Data Contract.
+ * It ensures variable existence, type compatibility, and correct function usage.
+ */
 export class TypeChecker {
     private variables: Map<string, Type> = new Map();
     private filename?: string;
 
+    /**
+     * Converts a JSON schema definition into an internal Axiom Type.
+     * Supports primitives ('int', 'string'), arrays ('int[]'), and nested objects.
+     */
     static validateType(def: any): Type {
         // 1. Primitive Strings and Array Logic
         if (typeof def === 'string') {
@@ -50,6 +58,10 @@ export class TypeChecker {
         throw new Error(`Invalid type definition: ${JSON.stringify(def)}`);
     }
 
+    /**
+     * Validates the entire script against the contract.
+     * Ensures all variable usages are valid and the return value matches the output contract.
+     */
     check(statements: Statement[], contract: ContractDef, filename?: string): void {
         // 1. Initialize variables with Input contract (Context)
         this.variables = new Map(Object.entries(contract.inputs));
@@ -79,6 +91,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Recursive helper to validate that actual return type matches expected structure.
+     */
     private validateObjectMatch(expected: Type, actual: Type, filename?: string): void {
         if (typeof expected === 'object' && expected.kind === 'object' &&
             typeof actual === 'object' && actual.kind === 'object') {
@@ -99,6 +114,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Dispatches statement validation based on kind.
+     */
     private checkStatement(stmt: Statement): void {
         switch (stmt.kind) {
             case 'VarDecl':
@@ -122,6 +140,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Validates variable declaration type consistency and uniqueness.
+     */
     private checkVarDecl(stmt: VarDecl): void {
         const initializerType = this.checkExpression(stmt.initializer);
         if (!this.areTypesEqual(initializerType, stmt.typeAnnotation)) {
@@ -133,6 +154,9 @@ export class TypeChecker {
         this.variables.set(stmt.name, stmt.typeAnnotation);
     }
 
+    /**
+     * Validates assignment to ensure variable exists and type matches.
+     */
     private checkAssignment(stmt: any): void {
         const type = this.variables.get(stmt.name);
         if (!type) {
@@ -144,6 +168,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Validates If statement condition (must be bool) and branches.
+     */
     private checkIf(stmt: IfStmt): void {
         const conditionType = this.checkExpression(stmt.condition);
         if (conditionType !== 'bool') {
@@ -155,12 +182,18 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Validates a block of statements.
+     */
     private checkBlock(stmt: BlockStmt): void {
         for (const s of stmt.statements) {
             this.checkStatement(s);
         }
     }
 
+    /**
+     * Infers the type of an expression.
+     */
     private checkExpression(expr: Expression): Type {
         switch (expr.kind) {
             case 'Binary':
@@ -189,6 +222,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Validates function calls and macro usage.
+     */
     private checkCall(expr: CallExpr): Type {
         // 1. Check for 'has' macro: has(expr)
         if (expr.callee.kind === 'Variable' && (expr.callee as any).name === 'has') {
@@ -259,12 +295,18 @@ export class TypeChecker {
         throw new Error("Unknown function call or macro.");
     }
 
+    /**
+     * Helper to verify argument count for functions.
+     */
     private checkArgCount(expr: CallExpr, count: number, name: string): void {
         if (expr.arguments.length !== count) {
             throw new Error(`Function '${name}' expects ${count} argument(s), got ${expr.arguments.length}.`);
         }
     }
 
+    /**
+     * Helper to verify argument type for functions.
+     */
     private checkArgType(expr: CallExpr, index: number, expected: Type): void {
         const argType = this.checkExpression(expr.arguments[index]);
         if (!this.areTypesEqual(argType, expected)) {
@@ -272,6 +314,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Infers type for object literals.
+     */
     private checkObject(expr: ObjectExpr): Type {
         const properties: Record<string, Type> = {};
         for (const prop of expr.properties) {
@@ -280,6 +325,9 @@ export class TypeChecker {
         return { kind: 'object', properties };
     }
 
+    /**
+     * Ensures `has()` macro argument is a valid member chain.
+     */
     private checkHasArg(expr: MemberExpr): void {
         if (expr.object.kind === 'Variable') {
             if (!this.variables.has((expr.object as any).name)) {
@@ -292,6 +340,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Infers list type and ensures homogeneity.
+     */
     private checkList(expr: { elements: Expression[] }): Type {
         if (expr.elements.length === 0) {
             return { kind: 'list', elementType: 'unknown' };
@@ -307,6 +358,9 @@ export class TypeChecker {
         return { kind: 'list', elementType: firstType };
     }
 
+    /**
+     * Validates property access on objects.
+     */
     private checkMember(expr: { object: Expression, property: string }): Type {
         const objectType = this.checkExpression(expr.object);
         if (typeof objectType === 'string' || objectType.kind !== 'object') {
@@ -320,6 +374,9 @@ export class TypeChecker {
         return propertyType;
     }
 
+    /**
+     * Validates unary operations.
+     */
     private checkUnary(expr: UnaryExpr): Type {
         const right = this.checkExpression(expr.right);
         switch (expr.operator) {
@@ -334,6 +391,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Validates binary operations and ensures operand compatibility.
+     */
     private checkBinary(expr: BinaryExpr): Type {
         const left = this.checkExpression(expr.left);
         const right = this.checkExpression(expr.right);
@@ -386,6 +446,9 @@ export class TypeChecker {
         }
     }
 
+    /**
+     * Compares two types for structural equality.
+     */
     private areTypesEqual(t1: Type, t2: Type): boolean {
         if (typeof t1 === 'string' && typeof t2 === 'string') {
             if (t1 === 'unknown' || t2 === 'unknown') return true;

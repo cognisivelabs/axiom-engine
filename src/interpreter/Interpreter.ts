@@ -5,9 +5,19 @@ import {
 } from '../common/AST';
 import { RuntimeError } from '../common/Errors';
 
+/**
+ * The Runtime Interpreter for the Axiom Language.
+ * It walks the AST and executes the logic using the provided context.
+ */
 export class Interpreter {
     private environment: Map<string, any> = new Map();
 
+    /**
+     * Executes a list of statements against a data context.
+     * @param statements The AST.
+     * @param context The input data object (variables).
+     * @returns The last evaluated value (implicit return).
+     */
     interpret(statements: Statement[], context: Record<string, any> = {}): any {
         this.environment = new Map(Object.entries(context));
 
@@ -18,6 +28,11 @@ export class Interpreter {
         return lastValue;
     }
 
+    /**
+     * Dispatches execution to the specific handler based on statement kind.
+     * @param stmt The statement to execute.
+     * @returns The result of the statement (if any), or null.
+     */
     private execute(stmt: Statement): any {
         switch (stmt.kind) {
             case 'VarDecl':
@@ -38,6 +53,11 @@ export class Interpreter {
         }
     }
 
+    /**
+     * Updates an existing variable in the current scope.
+     * @param stmt The assignment statement.
+     * @throws {RuntimeError} If variable is not defined.
+     */
     private executeAssignment(stmt: any): void {
         const value = this.evaluate(stmt.value);
         if (!this.environment.has(stmt.name)) {
@@ -46,11 +66,20 @@ export class Interpreter {
         this.environment.set(stmt.name, value);
     }
 
+    /**
+     * Declares a new variable in the current scope and initializes it.
+     * @param stmt The declaration statement.
+     */
     private executeVarDecl(stmt: VarDecl): void {
         const value = this.evaluate(stmt.initializer);
         this.environment.set(stmt.name, value);
     }
 
+    /**
+     * Executes conditional logic.
+     * @param stmt The If statement.
+     * @returns The result of the executed branch (if any).
+     */
     private executeIf(stmt: IfStmt): any {
         const condition = this.evaluate(stmt.condition);
         if (condition) {
@@ -61,6 +90,11 @@ export class Interpreter {
         return null;
     }
 
+    /**
+     * Executes a block of statements.
+     * @param stmt The block statement.
+     * @returns The result of the last executed statement in the block.
+     */
     private executeBlock(stmt: BlockStmt): any {
         // In a real implementation, we would create a new environment for scope.
         let lastValue: any = null;
@@ -70,6 +104,11 @@ export class Interpreter {
         return lastValue;
     }
 
+    /**
+     * Evaluates an expression to a value.
+     * @param expr The expression to evaluate.
+     * @returns The computed value (primitive, object, or list).
+     */
     private evaluate(expr: Expression): any {
         switch (expr.kind) {
             case 'Literal':
@@ -95,6 +134,10 @@ export class Interpreter {
         }
     }
 
+    /**
+     * Handles function calls, including Macros (has, exists, all) and Global functions.
+     * @param expr The call expression.
+     */
     private evaluateCall(expr: CallExpr): any {
         // 1. 'has' macro
         if (expr.callee.kind === 'Variable' && (expr.callee as any).name === 'has') {
@@ -177,6 +220,9 @@ export class Interpreter {
         throw new Error(`Unknown function call or macro: ${(expr.callee as any).name || 'expression'}`);
     }
 
+    /**
+     * Helper for comparing numbers or dates.
+     */
     private evaluateComparison(left: any, right: any, comparator: (a: any, b: any) => boolean): boolean {
         if (typeof left === 'number' && typeof right === 'number') {
             return comparator(left, right);
@@ -191,6 +237,9 @@ export class Interpreter {
         return expr.elements.map(e => this.evaluate(e));
     }
 
+    /**
+     * Resolves value of a member access (dot notation).
+     */
     private evaluateMember(expr: { object: Expression, property: string }): any {
         const object = this.evaluate(expr.object);
         if (typeof object !== 'object' || object === null) {
@@ -204,6 +253,9 @@ export class Interpreter {
         return object[expr.property];
     }
 
+    /**
+     * Constructs a new object from properties.
+     */
     private evaluateObject(expr: ObjectExpr): any {
         const obj: any = {};
         for (const prop of expr.properties) {
@@ -212,6 +264,9 @@ export class Interpreter {
         return obj;
     }
 
+    /**
+     * Evaluates unary operations (!, -).
+     */
     private evaluateUnary(expr: UnaryExpr): any {
         const right = this.evaluate(expr.right);
         switch (expr.operator) {
@@ -221,6 +276,9 @@ export class Interpreter {
         }
     }
 
+    /**
+     * Evaluates binary operations (+, -, *, /, &&, ||, comparisons).
+     */
     private evaluateBinary(expr: BinaryExpr): any {
         const left = this.evaluate(expr.left);
         const right = this.evaluate(expr.right);

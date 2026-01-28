@@ -1,5 +1,9 @@
 import { Token, TokenType } from '../common/TokenType';
 
+/**
+ * The Lexer (Tokenizer) converts raw source code into a list of Tokens.
+ * It handles whitespace skipping, comment stripping, and identifying literals/keywords.
+ */
 export class Lexer {
     private source: string;
     private position: number = 0;
@@ -22,6 +26,10 @@ export class Lexer {
         this.source = source;
     }
 
+    /**
+     * Scans the entire source string and returns an array of Tokens.
+     * Appends an EOF token at the end.
+     */
     tokenize(): Token[] {
         const tokens: Token[] = [];
         while (this.position < this.source.length) {
@@ -131,11 +139,17 @@ export class Lexer {
         return tokens;
     }
 
+    /**
+     * Creates a token for a single character operator or delimiter.
+     */
     private singleChar(type: TokenType, value: string): Token {
         this.advance();
         return { type, value, line: this.line };
     }
 
+    /**
+     * Consumes digits to form a number token.
+     */
     private readNumber(): Token {
         let value = '';
         while (this.position < this.source.length && /[0-9]/.test(this.peek())) {
@@ -144,6 +158,9 @@ export class Lexer {
         return { type: TokenType.NUMBER, value, line: this.line };
     }
 
+    /**
+     * Consumes alphanumeric characters to form an identifier or keyword token.
+     */
     private readIdentifier(): Token {
         let value = '';
         while (this.position < this.source.length && /[a-zA-Z0-9_]/.test(this.peek())) {
@@ -153,6 +170,10 @@ export class Lexer {
         return { type, value, line: this.line };
     }
 
+    /**
+     * Consumes characters between quotes to form a string token.
+     * @throws error if string is unterminated.
+     */
     private readString(): Token {
         let value = '';
         this.advance(); // Skip opening quote
@@ -164,19 +185,31 @@ export class Lexer {
         return { type: TokenType.STRING, value, line: this.line };
     }
 
+    /**
+     * Returns the current character without advancing.
+     */
     private peek(): string {
         return this.source[this.position];
     }
 
+    /**
+     * Returns the next character without advancing.
+     */
     private peekNext(): string {
         if (this.position + 1 >= this.source.length) return '\0';
         return this.source[this.position + 1];
     }
 
+    /**
+     * Returns the current character and moves one step forward.
+     */
     private advance(): string {
         return this.source[this.position++];
     }
 
+    /**
+     * Checks if we have reached the end of source.
+     */
     private isAtEnd(): boolean {
         return this.position >= this.source.length;
     }
