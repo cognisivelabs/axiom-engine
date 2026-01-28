@@ -1,0 +1,24 @@
+// Role-Based Access Control (RBAC) Policy
+
+let final_decision: bool = false;
+
+// 1. Check for Admin Override
+let is_admin: bool = "admin" in user.roles;
+
+if (is_admin) {
+    final_decision = true;
+} else {
+    // 2. Define conditions
+    let is_owner: bool = user.id == resource.owner_id;
+    let same_dept: bool = user.department == resource.department;
+    let is_top_secret: bool = resource.classification == "top_secret";
+    
+    // 3. Logic
+    if (is_top_secret) {
+        final_decision = false;
+    } else {
+        final_decision = is_owner || (same_dept && resource.classification == "confidential");
+    }
+}
+
+final_decision
