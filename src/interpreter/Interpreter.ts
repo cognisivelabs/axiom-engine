@@ -3,6 +3,7 @@ import {
     Statement, Expression, VarDecl, BinaryExpr, IfStmt, BlockStmt,
     ExpressionStmt, UnaryExpr, CallExpr, LambdaExpr, MemberExpr, ObjectExpr
 } from '../common/AST';
+import { RuntimeError } from '../common/Errors';
 
 export class Interpreter {
     private environment: Map<string, any> = new Map();
@@ -40,7 +41,7 @@ export class Interpreter {
     private executeAssignment(stmt: any): void {
         const value = this.evaluate(stmt.value);
         if (!this.environment.has(stmt.name)) {
-            throw new Error(`Undefined variable '${stmt.name}'.`);
+            throw new RuntimeError(`Undefined variable '${stmt.name}'.`);
         }
         this.environment.set(stmt.name, value);
     }
