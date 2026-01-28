@@ -73,6 +73,23 @@ export class TypeChecker {
                 // Let's modify checkStatement to return Type | null? Or just re-check the expression here since it's cheap (just lookups usually).
 
                 if (!this.areTypesEqual(returnType, lastExprType)) {
+                    // Improve error message for objects
+                    if (typeof returnType === 'object' && returnType.kind === 'object' &&
+                        typeof lastExprType === 'object' && lastExprType.kind === 'object') {
+
+                        for (const key of Object.keys(returnType.properties)) {
+                            const expectedProp = returnType.properties[key];
+                            const actualProp = lastExprType.properties[key];
+
+                            if (!actualProp) {
+                                throw new Error(`Return type mismatch: missing required property '${key}' of type ${JSON.stringify(expectedProp)}`);
+                            }
+                            if (!this.areTypesEqual(expectedProp, actualProp)) {
+                                throw new Error(`Return type mismatch at property '${key}': expected ${JSON.stringify(expectedProp)}, got ${JSON.stringify(actualProp)}`);
+                            }
+                        }
+                    }
+
                     throw new Error(`Return type mismatch: expected ${JSON.stringify(returnType)}, got ${JSON.stringify(lastExprType)}`);
                 }
             }
