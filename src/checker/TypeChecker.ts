@@ -7,6 +7,7 @@ import { TypeError as AxiomTypeError } from '../common/Errors';
 
 export class TypeChecker {
     private variables: Map<string, Type> = new Map();
+    private filename?: string;
 
     static validateContext(contextDef: any): Record<string, Type> {
         const result: Record<string, Type> = {};
@@ -56,9 +57,10 @@ export class TypeChecker {
         throw new Error(`Invalid type definition: ${def}`);
     }
 
-    check(statements: Statement[], contextTypes: Record<string, Type> = {}, returnType?: Type): void {
+    check(statements: Statement[], contextTypes: Record<string, Type> = {}, returnType?: Type, filename?: string): void {
         // Initialize variables with context types
         this.variables = new Map(Object.entries(contextTypes));
+        this.filename = filename;
 
         for (let i = 0; i < statements.length; i++) {
             const stmt = statements[i];
@@ -83,15 +85,15 @@ export class TypeChecker {
                             const actualProp = lastExprType.properties[key];
 
                             if (!actualProp) {
-                                throw new AxiomTypeError(`Return type mismatch: Contract requires property '${key}' of type ${JSON.stringify(expectedProp)}, but Rule result is missing it.`);
+                                throw new AxiomTypeError(`Return type mismatch: Contract requires property '${key}' of type ${JSON.stringify(expectedProp)}, but Rule result is missing it.`, this.filename);
                             }
                             if (!this.areTypesEqual(expectedProp, actualProp)) {
-                                throw new AxiomTypeError(`Return type mismatch at property '${key}': Contract expects ${JSON.stringify(expectedProp)}, but Rule returns ${JSON.stringify(actualProp)}`);
+                                throw new AxiomTypeError(`Return type mismatch at property '${key}': Contract expects ${JSON.stringify(expectedProp)}, but Rule returns ${JSON.stringify(actualProp)}`, this.filename);
                             }
                         }
                     }
 
-                    throw new AxiomTypeError(`Return type mismatch: Contract expects ${JSON.stringify(returnType)}, but Rule returns ${JSON.stringify(lastExprType)}`);
+                    throw new AxiomTypeError(`Return type mismatch: Contract expects ${JSON.stringify(returnType)}, but Rule returns ${JSON.stringify(lastExprType)}`, this.filename);
                 }
             }
         }
@@ -123,10 +125,10 @@ export class TypeChecker {
     private checkVarDecl(stmt: VarDecl): void {
         const initializerType = this.checkExpression(stmt.initializer);
         if (!this.areTypesEqual(initializerType, stmt.typeAnnotation)) {
-            throw new AxiomTypeError(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(initializerType)} to ${JSON.stringify(stmt.typeAnnotation)}`);
+            throw new AxiomTypeError(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(initializerType)} to ${JSON.stringify(stmt.typeAnnotation)}`, this.filename);
         }
         if (this.variables.has(stmt.name)) {
-            throw new AxiomTypeError(`Variable '${stmt.name}' already declared.`);
+            throw new AxiomTypeError(`Variable '${stmt.name}' already declared.`, this.filename);
         }
         this.variables.set(stmt.name, stmt.typeAnnotation);
     }
@@ -134,11 +136,11 @@ export class TypeChecker {
     private checkAssignment(stmt: any): void { // Using any for simplicity as AST interface import might need update
         const type = this.variables.get(stmt.name);
         if (!type) {
-            throw new AxiomTypeError(`Undefined variable '${stmt.name}'.`);
+            throw new AxiomTypeError(`Undefined variable '${stmt.name}'.`, this.filename);
         }
         const valueType = this.checkExpression(stmt.value);
         if (!this.areTypesEqual(type, valueType)) {
-            throw new AxiomTypeError(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(valueType)} to ${JSON.stringify(type)}`);
+            throw new AxiomTypeError(`Type mismatch for variable '${stmt.name}': cannot assign ${JSON.stringify(valueType)} to ${JSON.stringify(type)}`, this.filename);
         }
     }
 
@@ -147,7 +149,7 @@ export class TypeChecker {
     private checkIf(stmt: IfStmt): void {
         const conditionType = this.checkExpression(stmt.condition);
         if (conditionType !== 'bool') {
-            throw new AxiomTypeError(`If condition must be a boolean, got ${conditionType}`);
+            throw new AxiomTypeError(`If condition must be a boolean, got ${conditionType}`, this.filename);
         }
         this.checkStatement(stmt.thenBranch);
         if (stmt.elseBranch) {

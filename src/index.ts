@@ -8,14 +8,14 @@ import { Statement, Type } from './common/AST';
 import { ErrorReporter } from './common/ErrorReporter';
 
 export class Axiom {
-    static compile(source: string): Statement[] {
+    static compile(source: string, filename?: string): Statement[] {
         const lexer = new Lexer(source);
         const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
+        const parser = new Parser(tokens, filename);
         return parser.parse();
     }
 
-    static check(ast: Statement[], contextTypes: any, returnType?: any): void {
+    static check(ast: Statement[], contextTypes: any, returnType?: any, filename?: string): void {
         const validatedContext = TypeChecker.validateContext(contextTypes);
         // Validate return type if provided
         let validatedReturn: Type | undefined = undefined;
@@ -27,7 +27,7 @@ export class Axiom {
         }
 
         const checker = new TypeChecker();
-        checker.check(ast, validatedContext, validatedReturn);
+        checker.check(ast, validatedContext, validatedReturn, filename);
     }
 
     static execute(ast: Statement[], contextData: Record<string, any>): any {
@@ -36,9 +36,9 @@ export class Axiom {
     }
 
     // Convenience method for one-shot execution (slower due to re-parsing)
-    static eval(source: string, context: Record<string, any>, types: Record<string, Type>): any {
-        const ast = this.compile(source);
-        this.check(ast, types);
+    static eval(source: string, context: Record<string, any>, types: Record<string, Type>, filename?: string): any {
+        const ast = this.compile(source, filename);
+        this.check(ast, types, undefined, filename);
         return this.execute(ast, context);
     }
 }
@@ -68,7 +68,7 @@ if (require.main === module) {
         console.log("Context:", contextValues);
         console.log("--------------------");
 
-        const result = Axiom.eval(source, contextValues, contextTypes);
+        const result = Axiom.eval(source, contextValues, contextTypes, path.basename(filePath));
 
         console.log("[Verifying] Type Check Passed.");
         console.log("--------------------");

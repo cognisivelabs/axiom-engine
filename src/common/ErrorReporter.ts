@@ -13,11 +13,12 @@ export class ErrorReporter {
 
     private static formatAxiomError(error: AxiomError): string {
         const type = error.name.replace('Error', ''); // SyntaxError -> Syntax
+        const fileContext = error.filename ? ` in '${error.filename}'` : '';
 
-        let message = `[${type} Error] ${error.message}`;
+        let message = `[${type} Error]${fileContext} ${error.message}`;
 
         if (error instanceof SyntaxError) {
-            message = `[Syntax Error] Line ${error.line}: ${error.message}`;
+            message = `[Syntax Error]${fileContext} Line ${error.line}: ${error.message}`;
         }
 
         return message;

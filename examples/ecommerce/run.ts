@@ -11,7 +11,7 @@ const source = fs.readFileSync(RULES_PATH, 'utf-8');
 const contextDef = JSON.parse(fs.readFileSync(CONTEXT_PATH, 'utf-8'));
 
 console.log("Compiling rules...");
-const ast = Axiom.compile(source);
+const ast = Axiom.compile(source, 'pricing.ax');
 
 // Extract return type if present (convention: _returnType)
 const returnType = contextDef._returnType;
@@ -21,7 +21,7 @@ if (returnType) {
 
 // Verify types (Strict check enabled, with Output Validation)
 try {
-    Axiom.check(ast, contextDef, returnType);
+    Axiom.check(ast, contextDef, returnType, 'pricing.ax');
 } catch (e: any) {
     ErrorReporter.report(e);
     process.exit(1);
