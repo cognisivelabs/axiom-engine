@@ -14,6 +14,7 @@ export class Lexer {
         'string': TokenType.TYPE_STRING,
         'bool': TokenType.TYPE_BOOL,
         'date': TokenType.TYPE_DATE,
+        'object': TokenType.TYPE_OBJECT,
         'in': TokenType.IN,
     };
 

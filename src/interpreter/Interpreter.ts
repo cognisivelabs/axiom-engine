@@ -1,7 +1,7 @@
 
 import {
     Statement, Expression, VarDecl, BinaryExpr, IfStmt, BlockStmt,
-    ExpressionStmt, UnaryExpr, CallExpr, LambdaExpr, MemberExpr
+    ExpressionStmt, UnaryExpr, CallExpr, LambdaExpr, MemberExpr, ObjectExpr
 } from '../common/AST';
 
 export class Interpreter {
@@ -87,6 +87,8 @@ export class Interpreter {
                 return this.evaluateList(expr as any);
             case 'Call':
                 return this.evaluateCall(expr as CallExpr);
+            case 'Object':
+                return this.evaluateObject(expr as ObjectExpr);
             default:
                 throw new Error(`Unknown expression kind: ${expr}`);
         }
@@ -199,6 +201,14 @@ export class Interpreter {
             throw new Error(`Property '${expr.property}' does not exist on object.`);
         }
         return object[expr.property];
+    }
+
+    private evaluateObject(expr: ObjectExpr): any {
+        const obj: any = {};
+        for (const prop of expr.properties) {
+            obj[prop.key] = this.evaluate(prop.value);
+        }
+        return obj;
     }
 
     private evaluateUnary(expr: UnaryExpr): any {

@@ -16,6 +16,7 @@ export enum TokenType {
     TYPE_STRING,
     TYPE_BOOL,
     TYPE_DATE,
+    TYPE_OBJECT,
 
     // Operators
     EQUALS,
