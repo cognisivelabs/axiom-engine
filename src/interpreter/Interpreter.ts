@@ -146,7 +146,42 @@ export class Interpreter {
                 }
             }
         }
-        throw new Error("Unknown macro.");
+
+        // 3. String & Date Functions (Global)
+        if (expr.callee.kind === 'Variable') {
+            const funcName = (expr.callee as any).name;
+            const args = expr.arguments.map(a => this.evaluate(a));
+
+            switch (funcName) {
+                // String Functions
+                case 'startsWith':
+                    return String(args[0]).startsWith(String(args[1]));
+                case 'endsWith':
+                    return String(args[0]).endsWith(String(args[1]));
+                case 'contains':
+                    return String(args[0]).includes(String(args[1]));
+                case 'length':
+                    return String(args[0]).length;
+
+                // Date Functions
+                case 'timestamp':
+                    const date = new Date(args[0]);
+                    if (isNaN(date.getTime())) throw new Error(`Invalid date string: ${args[0]}`);
+                    return date;
+            }
+        }
+
+        throw new Error(`Unknown function call or macro: ${(expr.callee as any).name || 'expression'}`);
+    }
+
+    private evaluateComparison(left: any, right: any, comparator: (a: any, b: any) => boolean): boolean {
+        if (typeof left === 'number' && typeof right === 'number') {
+            return comparator(left, right);
+        }
+        if (left instanceof Date && right instanceof Date) {
+            return comparator(left.getTime(), right.getTime());
+        }
+        throw new Error(`Cannot compare ${left} and ${right}`);
     }
 
     private evaluateList(expr: { elements: Expression[] }): any[] {
@@ -186,10 +221,10 @@ export class Interpreter {
             case '/': return left / right;
             case '==': return left === right;
             case '!=': return left !== right;
-            case '>': return left > right;
-            case '>=': return left >= right;
-            case '<': return left < right;
-            case '<=': return left <= right;
+            case '>': return this.evaluateComparison(left, right, (a, b) => a > b);
+            case '>=': return this.evaluateComparison(left, right, (a, b) => a >= b);
+            case '<': return this.evaluateComparison(left, right, (a, b) => a < b);
+            case '<=': return this.evaluateComparison(left, right, (a, b) => a <= b);
             case '&&': return left && right;
             case '||': return left || right;
             case 'in': return right.includes(left);

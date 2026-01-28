@@ -11,6 +11,7 @@ Axiom supports the following primitive types:
 | `int` | Integer numbers | `42`, `-10`, `0` |
 | `string` | Text strings | `"Hello"`, `"Gold"` |
 | `bool` | Boolean values | `true`, `false` |
+| `date` | Date and Time | `timestamp("2023-01-01")` |
 
 ## Variables
 
@@ -53,10 +54,34 @@ final_price; // The script returns 100
 | :--- | :--- | :--- |
 | `+`, `-`, `*`, `/` | `int` | `int` |
 | `==`, `!=` | All Types | `bool` |
-| `>`, `<`, `>=`, `<=` | `int` | `bool` |
+| `>`, `<`, `>=`, `<=` | `int`, `date` | `bool` |
 | `&&`, `||` | `bool` | `bool` |
 | `!` (Unary) | `bool` | `bool` |
 | `.` (Member Access) | `object` | `any` |
+| `in` | `scalar, list` | `bool` |
+
+## Standard Library (Built-in Functions)
+
+### String Functions
+| Function | Description | Example |
+| :--- | :--- | :--- |
+| `startsWith(str, prefix)` | Checks if string starts with prefix | `startsWith("hello", "he")` -> `true` |
+| `endsWith(str, suffix)` | Checks if string ends with suffix | `endsWith("hello", "lo")` -> `true` |
+| `contains(str, substr)` | Checks if string contains substring | `contains("hello", "ell")` -> `true` |
+| `length(str)` | Returns length of string | `length("hello")` -> `5` |
+
+### Date Functions
+| Function | Description | Example |
+| :--- | :--- | :--- |
+| `timestamp(iso_str)` | Parses ISO 8601 string to date | `timestamp("2023-01-01T00:00:00Z")` |
+
+### List Macros
+Macros operate on lists using lambda syntax.
+
+| Macro | Description | Example |
+| :--- | :--- | :--- |
+| `.exists(item, predicate)` | Returns true if ANY item matches | `[1, 2, 3].exists(n, n > 2)` |
+| `.all(item, predicate)` | Returns true if ALL items match | `[1, 2, 3].all(n, n > 0)` |
 
 ## Context (Input Variables)
 Variables passed from the Host Application are available globally. 

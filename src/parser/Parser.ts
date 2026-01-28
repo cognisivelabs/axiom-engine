@@ -37,6 +37,7 @@ export class Parser {
         if (this.match(TokenType.TYPE_INT)) typeAnnotation = 'int';
         else if (this.match(TokenType.TYPE_STRING)) typeAnnotation = 'string';
         else if (this.match(TokenType.TYPE_BOOL)) typeAnnotation = 'bool';
+        else if (this.match(TokenType.TYPE_DATE)) typeAnnotation = 'date';
         else throw new Error("Expect type annotation (int, string, bool).");
 
         // Check for array type: int[]
