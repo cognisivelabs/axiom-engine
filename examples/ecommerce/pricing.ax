@@ -1,24 +1,10 @@
 // 1. Initialize logic
 let discount: int = 0;
-let reasons: string[] = [];
 
 // 2. VIP Rule (10% off)
 if (user.is_vip) {
     discount = discount + 10;
-    // We don't have list.push yet, so we have to reassign if we want to add? 
-    // Wait, we don't have list append in the language yet?
-    // Let's check Parser/Interpreter. We only implemented `in`, `exists`, `all`. 
-    // We DON'T have `push` or `+` for lists yet.
-    // 
-    // Workaround: We can't easily build a list of strings dynamically yet without `push` or `+`.
-    // Let's just return the numeric breakdown for now and maybe SKIP the list for MVP until we add `List.add`.
-    // Or we use a long concat string? "VIP, Bulk"
 }
-
-// Re-evaluating plan: we lack list mutation. 
-// Alternative: Return boolean flags in the object? 
-// { final_price: ..., is_vip_applied: true, ... }
-// That works.
 
 // 3. Corporate Discount
 if (endsWith(user.email, "@cognisive.com")) {
@@ -55,9 +41,8 @@ if (discount < 0) { discount = 0; }
 let final_price: int = cart.total * (100 - discount) / 100;
 
 // Return Logic Object
-let result: object = {
+({
     final_price: final_price,
     discount_percentage: discount,
     currency: "USD"
-};
-result
+})

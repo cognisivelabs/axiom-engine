@@ -18,5 +18,10 @@
         "promo_code": "string"
     },
     "execution_date": "string",
-    "event_start_date": "string"
+    "event_start_date": "string",
+    "_returnType": {
+        "final_price": "int",
+        "discount_percentage": "int",
+        "currency": "string"
+    }
 }
