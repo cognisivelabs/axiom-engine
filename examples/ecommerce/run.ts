@@ -15,7 +15,7 @@ const ast = Axiom.compile(source);
 // Verify types (optional but good practice)
 // Note: our simple context.json uses "list" which implies list<any> or needs handling in TypeChecker for strictness.
 // For now we might skip strict check inside this script if TypeChecker is strict about list generics.
-// Axiom.check(ast, contextDef); 
+Axiom.check(ast, contextDef);
 
 const scenarios = [
     {

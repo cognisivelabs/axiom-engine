@@ -6,7 +6,13 @@
     },
     "cart": {
         "total": "int",
-        "items": "list"
+        "items": [
+            {
+                "price": "int",
+                "category": "string",
+                "name": "string"
+            }
+        ]
     },
     "platform": {
         "promo_code": "string"
