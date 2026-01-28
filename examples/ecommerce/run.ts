@@ -1,5 +1,6 @@
 
-import { Axiom } from '../../src/index'; // Relative import assuming compiled output structure or ts-node from root
+import { Axiom } from '../../src/index';
+import { ErrorReporter } from '../../src/common/ErrorReporter';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -19,7 +20,12 @@ if (returnType) {
 }
 
 // Verify types (Strict check enabled, with Output Validation)
-Axiom.check(ast, contextDef, returnType);
+try {
+    Axiom.check(ast, contextDef, returnType);
+} catch (e: any) {
+    ErrorReporter.report(e);
+    process.exit(1);
+}
 
 const scenarios = [
     {
