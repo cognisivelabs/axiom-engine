@@ -44,25 +44,13 @@ describe('Axiom Engine Integration Tests', () => {
         const source = readRule('member_access.ax');
         const contextTypes: any = {
             'user': {
-                kind: 'object',
-                properties: {
-                    'name': 'string',
+                'name': 'string',
+                'address': {
+                    'city': 'string'
+                },
+                'company': {
                     'address': {
-                        kind: 'object',
-                        properties: {
-                            'city': 'string'
-                        }
-                    },
-                    'company': {
-                        kind: 'object',
-                        properties: {
-                            'address': {
-                                kind: 'object',
-                                properties: {
-                                    'zip': 'string'
-                                }
-                            }
-                        }
+                        'zip': 'string'
                     }
                 }
             }
@@ -92,7 +80,7 @@ describe('Axiom Engine Integration Tests', () => {
     it('should throw error on invalid property access', () => {
         const source = `let x: string = user.unknown_prop;`;
         const contextTypes: any = {
-            'user': { kind: 'object', properties: { 'name': 'string' } }
+            'user': { 'name': 'string' }
         };
 
         try {
@@ -130,10 +118,7 @@ describe('Axiom Engine Integration Tests', () => {
         const source = readRule('macros.ax');
         const contextTypes: any = {
             'user': {
-                kind: 'object',
-                properties: {
-                    'name': 'string'
-                }
+                'name': 'string'
             }
         };
 

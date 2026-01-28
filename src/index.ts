@@ -14,9 +14,10 @@ export class Axiom {
         return parser.parse();
     }
 
-    static check(ast: Statement[], contextTypes: Record<string, Type>): void {
+    static check(ast: Statement[], contextTypes: any): void {
+        const validatedContext = TypeChecker.validateContext(contextTypes);
         const checker = new TypeChecker();
-        checker.check(ast, contextTypes);
+        checker.check(ast, validatedContext);
     }
 
     static execute(ast: Statement[], contextData: Record<string, any>): any {

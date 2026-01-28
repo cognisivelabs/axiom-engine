@@ -7,6 +7,54 @@ import {
 export class TypeChecker {
     private variables: Map<string, Type> = new Map();
 
+    static validateContext(contextDef: any): Record<string, Type> {
+        const result: Record<string, Type> = {};
+        for (const [key, value] of Object.entries(contextDef)) {
+            result[key] = this.validateType(value);
+        }
+        return result;
+    }
+
+    private static validateType(def: any): Type {
+        // 1. Primitive Strings and Array Logic
+        if (typeof def === 'string') {
+            const primitives = ['int', 'string', 'bool', 'date'];
+
+            // Check for array syntax "int[]"
+            if (def.endsWith('[]')) {
+                const base = def.substring(0, def.length - 2);
+                if (!primitives.includes(base)) {
+                    throw new Error(`Unknown type in array definition: '${base}'. Supported: ${primitives.join(', ')}`);
+                }
+                return { kind: 'list', elementType: base as Type };
+            }
+
+            if (primitives.includes(def)) {
+                return def as Type;
+            }
+            throw new Error(`Unknown type: '${def}'. Supported: ${primitives.join(', ')}`);
+        }
+
+        // 2. Struct Definitions (User-Friendly List Syntax: [ { ... } ])
+        if (Array.isArray(def)) {
+            if (def.length !== 1) {
+                throw new Error("List definition must have exactly one element specifying the type, e.g. [ 'int' ] or [ { ... } ]");
+            }
+            return { kind: 'list', elementType: this.validateType(def[0]) };
+        }
+
+        // 3. Object Definitions
+        if (typeof def === 'object' && def !== null) {
+            const properties: Record<string, Type> = {};
+            for (const [key, value] of Object.entries(def)) {
+                properties[key] = this.validateType(value);
+            }
+            return { kind: 'object', properties };
+        }
+
+        throw new Error(`Invalid type definition: ${def}`);
+    }
+
     check(statements: Statement[], contextTypes: Record<string, Type> = {}): void {
         // Initialize variables with context types
         this.variables = new Map(Object.entries(contextTypes));
