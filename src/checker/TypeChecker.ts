@@ -177,7 +177,7 @@ export class TypeChecker {
                 return expr.type;
             case 'Variable':
                 const type = this.variables.get(expr.name);
-                if (!type) throw new Error(`Undefined variable '${expr.name}'`);
+                if (!type) throw new AxiomTypeError(`Undefined variable '${expr.name}'`, this.filename);
                 return type;
             case 'Member':
                 return this.checkMember(expr as any);
@@ -295,7 +295,7 @@ export class TypeChecker {
         // Verify root object exists. The rest of the path is checked at runtime (safe).
         if (expr.object.kind === 'Variable') {
             if (!this.variables.has((expr.object as any).name)) {
-                throw new Error(`Undefined variable '${(expr.object as any).name}' in has() check.`);
+                throw new AxiomTypeError(`Undefined variable '${(expr.object as any).name}' in has() check.`, this.filename);
             }
         } else if (expr.object.kind === 'Member') {
             this.checkHasArg(expr.object as MemberExpr);

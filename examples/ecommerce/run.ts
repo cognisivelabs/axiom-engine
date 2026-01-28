@@ -4,7 +4,7 @@ import { ErrorReporter } from '../../src/common/ErrorReporter';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const RULES_PATH = path.join(__dirname, 'pricing.arl'); // .ax -> .arl
+const RULES_PATH = path.join(__dirname, 'pricing.arl');
 const CONTEXT_PATH = path.join(__dirname, 'context.json');
 
 const source = fs.readFileSync(RULES_PATH, 'utf-8');

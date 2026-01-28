@@ -52,6 +52,11 @@ if (require.main === module) {
     }
 
     const filePath = args[0];
+    if (!filePath.endsWith('.arl')) {
+        console.error("Error: Axiom rule files must have an '.arl' extension.");
+        process.exit(1);
+    }
+
     if (!fs.existsSync(filePath)) {
         console.error(`File not found: ${filePath}`);
         process.exit(1);
