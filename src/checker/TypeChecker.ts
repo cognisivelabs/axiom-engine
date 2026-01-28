@@ -82,15 +82,15 @@ export class TypeChecker {
                             const actualProp = lastExprType.properties[key];
 
                             if (!actualProp) {
-                                throw new Error(`Return type mismatch: missing required property '${key}' of type ${JSON.stringify(expectedProp)}`);
+                                throw new Error(`Return type mismatch: Contract requires property '${key}' of type ${JSON.stringify(expectedProp)}, but Rule result is missing it.`);
                             }
                             if (!this.areTypesEqual(expectedProp, actualProp)) {
-                                throw new Error(`Return type mismatch at property '${key}': expected ${JSON.stringify(expectedProp)}, got ${JSON.stringify(actualProp)}`);
+                                throw new Error(`Return type mismatch at property '${key}': Contract expects ${JSON.stringify(expectedProp)}, but Rule returns ${JSON.stringify(actualProp)}`);
                             }
                         }
                     }
 
-                    throw new Error(`Return type mismatch: expected ${JSON.stringify(returnType)}, got ${JSON.stringify(lastExprType)}`);
+                    throw new Error(`Return type mismatch: Contract expects ${JSON.stringify(returnType)}, but Rule returns ${JSON.stringify(lastExprType)}`);
                 }
             }
         }
