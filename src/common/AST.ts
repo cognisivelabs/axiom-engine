@@ -1,5 +1,5 @@
 
-export type Type = 'int' | 'string' | 'bool' | 'date' | ObjectType | ListType;
+export type Type = 'int' | 'string' | 'bool' | 'date' | 'unknown' | ObjectType | ListType;
 
 export interface ObjectType {
     kind: 'object';

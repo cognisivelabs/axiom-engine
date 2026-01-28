@@ -58,6 +58,12 @@ console.log("| :--- | :--- | :--- | :--- |");
 
 for (const scenario of scenarios) {
     const result = Axiom.execute(ast, scenario.data);
-    const pass = result === scenario.expectedPrice;
-    console.log(`| ${scenario.name} | ${scenario.expectedPrice} | ${result} | ${pass ? '✅' : '❌'} |`);
+
+    // Check if result matches structure
+    const priceMatch = result.final_price === scenario.expectedPrice;
+
+    // We could add more assertions here for discount breakdown
+    // e.g. if (result.discount_percentage !== ...)
+
+    console.log(`| ${scenario.name} | ${scenario.expectedPrice} | ${result.final_price} (pct: ${result.discount_percentage}%) | ${priceMatch ? '✅' : '❌'} |`);
 }

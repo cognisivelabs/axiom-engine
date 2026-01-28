@@ -274,20 +274,8 @@ export class TypeChecker {
 
     private checkList(expr: { elements: Expression[] }): Type {
         if (expr.elements.length === 0) {
-            // Empty list problem. We don't know the type.
-            // For now, let's allow it but maybe treat as 'any[]'? 
-            // Or easier: require explicit type for empty lists in variable declarations? 
-            // Let's assume int[] for empty lists for now or throw error if not inferrable.
-            // Actually, for v1, let's say empty lists are valid and we might infer ANY. 
-            // But strict typing makes this hard. 
-            // Hack for MVP: Empty list is valid, we might assume generic list.
-            // However, our Type system is strict.
-            // Let's skip empty list complexity for a moment and assume non-empty or require context.
-            // Simplest: Error on empty list if we can't infer.
-            // Let's return a temporary 'empty_list' type or just int list for now.
-            // Better: 'list<any>' equivalent?
-            // Let's stick to: All elements must match the first element's type.
-            throw new Error("Empty lists not yet supported for type inference.");
+            // Return a list with 'unknown' element type to indicate it can match any list type
+            return { kind: 'list', elementType: 'unknown' };
         }
 
         const firstType = this.checkExpression(expr.elements[0]);
@@ -383,6 +371,7 @@ export class TypeChecker {
 
     private areTypesEqual(t1: Type, t2: Type): boolean {
         if (typeof t1 === 'string' && typeof t2 === 'string') {
+            if (t1 === 'unknown') return true; // 'unknown' (e.g. from empty list) matches any type
             return t1 === t2;
         }
         if (typeof t1 === 'object' && typeof t2 === 'object') {
