@@ -1,7 +1,7 @@
 
 import {
     Statement, Expression, Type, VarDecl, BinaryExpr, IfStmt, BlockStmt,
-    ExpressionStmt, UnaryExpr, CallExpr, MemberExpr, LambdaExpr
+    ExpressionStmt, UnaryExpr, CallExpr, MemberExpr, LambdaExpr, ObjectExpr
 } from '../common/AST';
 
 export class TypeChecker {
@@ -152,6 +152,8 @@ export class TypeChecker {
                 return this.checkCall(expr as CallExpr);
             case 'Lambda':
                 throw new Error("Lambdas are only allowed as arguments to macros.");
+            case 'Object':
+                return this.checkObject(expr as ObjectExpr);
             default:
                 const unreachable: never = expr;
                 throw new Error(`Unknown expression kind: ${(expr as any).kind}`);
@@ -244,6 +246,14 @@ export class TypeChecker {
         if (!this.areTypesEqual(argType, expected)) {
             throw new Error(`Type mismatch in argument ${index + 1}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(argType)}`);
         }
+    }
+
+    private checkObject(expr: ObjectExpr): Type {
+        const properties: Record<string, Type> = {};
+        for (const prop of expr.properties) {
+            properties[prop.key] = this.checkExpression(prop.value);
+        }
+        return { kind: 'object', properties };
     }
 
     private checkHasArg(expr: MemberExpr): void {
@@ -381,6 +391,11 @@ export class TypeChecker {
             }
             if (t1.kind === 'object' && t2.kind === 'object') {
                 // Simplified object equality: same keys and same types
+
+                // Allow assignment TO generic object (properties: {}) from specific object
+                // If t2 (target) has no properties, it's treated as 'object' (any object)
+                if (Object.keys(t2.properties).length === 0) return true;
+
                 const keys1 = Object.keys(t1.properties).sort();
                 const keys2 = Object.keys(t2.properties).sort();
                 if (keys1.length !== keys2.length) return false;

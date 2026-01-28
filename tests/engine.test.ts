@@ -141,6 +141,18 @@ describe('Axiom Engine Integration Tests', () => {
             assert.match(e.message, /List elements must be homogeneous/);
         }
     });
+    it('should verify Object Literals', () => {
+        const source = readRule('objects.ax');
+        const ast = Axiom.compile(source);
+        Axiom.check(ast, {});
+
+        const result = Axiom.execute(ast, {});
+        // Expanded object check
+        assert.strictEqual(result.status, 'success', 'Object property access failed');
+        assert.strictEqual(result.code, 200, 'Object property access failed');
+        assert.strictEqual(result.meta.version, '1.0', 'Nested object property access failed');
+    });
+
     it('should verify Control Flow and Scoping', () => {
         const source = readRule('control_flow.ax');
         const ast = Axiom.compile(source);

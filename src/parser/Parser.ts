@@ -3,7 +3,7 @@ import { Token, TokenType } from '../common/TokenType';
 import {
     Statement, VarDecl, IfStmt, BlockStmt, ExpressionStmt, Assignment,
     Expression, BinaryExpr, LiteralExpr, VariableExpr, Type,
-    CallExpr, LambdaExpr, MemberExpr
+    CallExpr, LambdaExpr, MemberExpr, ObjectExpr
 } from '../common/AST';
 
 export class Parser {
@@ -38,7 +38,8 @@ export class Parser {
         else if (this.match(TokenType.TYPE_STRING)) typeAnnotation = 'string';
         else if (this.match(TokenType.TYPE_BOOL)) typeAnnotation = 'bool';
         else if (this.match(TokenType.TYPE_DATE)) typeAnnotation = 'date';
-        else throw new Error("Expect type annotation (int, string, bool).");
+        else if (this.match(TokenType.TYPE_OBJECT)) typeAnnotation = { kind: 'object', properties: {} }; // Generic object type for now
+        else throw new Error("Expect type annotation (int, string, bool, date, object).");
 
         // Check for array type: int[]
         // We only support one level of array for now for simplicity, or we can loop.
@@ -279,6 +280,20 @@ export class Parser {
             const expr = this.expression();
             this.consume(TokenType.RPAREN, "Expect ')' after expression.");
             return expr;
+        }
+
+        if (this.match(TokenType.LBRACE)) {
+            const properties: { key: string; value: Expression }[] = [];
+            if (!this.check(TokenType.RBRACE)) {
+                do {
+                    const key = this.consume(TokenType.IDENTIFIER, "Expect key.").value;
+                    this.consume(TokenType.COLON, "Expect ':' after key.");
+                    const value = this.expression();
+                    properties.push({ key, value });
+                } while (this.match(TokenType.COMMA));
+            }
+            this.consume(TokenType.RBRACE, "Expect '}' after object properties.");
+            return { kind: 'Object', properties };
         }
 
         if (this.match(TokenType.LBRACKET)) {

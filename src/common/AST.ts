@@ -26,7 +26,8 @@ export type Expression =
     | LiteralExpr
     | VariableExpr
     | CallExpr
-    | LambdaExpr;
+    | LambdaExpr
+    | ObjectExpr;
 
 // Statements
 
@@ -110,4 +111,9 @@ export interface LambdaExpr {
     kind: 'Lambda';
     parameter: string;
     body: Expression;
+}
+
+export interface ObjectExpr {
+    kind: 'Object';
+    properties: { key: string; value: Expression }[];
 }
