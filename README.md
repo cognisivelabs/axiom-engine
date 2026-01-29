@@ -4,7 +4,10 @@
 
 Axiom is a lightweight, secure, and type-safe rule engine designed for the modern TypeScript/JavaScript ecosystem. It allows you to externalize business logic from your application code, empowering you to change rules without redeploying.
 
-Inspired by **Google CEL** (Common Expression Language).
+Axiom Rule Language (ARL) combines the **logical foundations of Google CEL** with a **familiar TypeScript-style syntax**.
+
+*   **TypeScript Syntax**: Rules are easy to write and read using standard `let`, `if/else`, and type annotations.
+*   **CEL-Inspired Logic**: Advanced macros (`exists`, `all`, `has`) and deterministic execution provide a safe, high-performance, and enterprise-grade foundation.
 
 ---
 

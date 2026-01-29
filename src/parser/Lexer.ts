@@ -66,7 +66,6 @@ export class Lexer {
                         this.advance();
                     }
                     break;
-                    break;
                 case '!':
                     if (this.peekNext() === '=') {
                         this.advance(); this.advance();

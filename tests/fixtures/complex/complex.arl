@@ -1,35 +1,32 @@
-// Complex Business Rule: Loan Eligibility
+// RULE: Premium User Eligibility
+// 
+// DESCRIPTION:
+// This rule determines if a user is eligible for a special promotion.
+// A user is eligible if:
+// 1. They are an ACTIVE user.
+// 2. AND (They are a Premium/Platinum member WITH at least one big order > 100).
+// 3. OR (All their orders have been successfully delivered).
+//
+// CONTEXT:
+// user: { tier: string, active: bool, orders: { total: int, status: string }[] }
 
-// Context:
-// user: { credit_score: int, income: int, debts: int[] }
-// loan: { amount: int }
-
-let total_debt: int = 0; // We don't have reduce() yet, so we just assume debt is passed as list? 
-// Actually we can't sum a list yet! We only have exists/all.
-// Let's change the scenario.
-
-// Context:
-// user: { 
-//    tier: string, 
-//    active: bool,
-//    orders: { total: int, status: string }[] 
-// }
-
+// 1. Extract basic status
 let is_active: bool = user.active;
 let is_premium: bool = user.tier == "gold" || user.tier == "platinum";
 
-// Check if user has any recent big orders (simulated by total > 100)
+// 2. Analyze order history using Google CEL-style Macros
 let has_big_order: bool = user.orders.exists(o, o.total > 100);
-
-// Check if all orders are delivered
 let all_delivered: bool = user.orders.all(o, o.status == "delivered");
 
-// Eligibility Logic
-// Eligibility Logic
+// 3. Apply Decision Logic
 let result: bool = false;
+
 if (!is_active) {
     result = false;
 } else {
-   result = (is_premium && has_big_order) || all_delivered;
+    // Premium users need a big order, otherwise everyone is eligible if all orders are delivered
+    result = (is_premium && has_big_order) || all_delivered;
 }
+
+// 4. Return the final eligibility result
 result
